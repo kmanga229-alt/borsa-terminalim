@@ -2,73 +2,65 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BIST Terminal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BIST Pro Terminal</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { background-color: #000; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 15px; }
-        .header { font-size: 18px; font-weight: bold; margin-bottom: 5px; color: #fff; }
-        .sub-header { color: #00ff88; font-size: 12px; margin-bottom: 20px; }
-        .hisse-list { display: flex; flex-direction: column; gap: 15px; padding-bottom: 80px; }
-        .hisse-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 10px; }
-        .hisse-info { display: flex; align-items: center; gap: 12px; }
-        .logo { width: 40px; height: 40px; background: #333; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 10px; }
-        .name-box .code { font-size: 16px; font-weight: bold; }
-        .name-box .full-name { font-size: 11px; color: #888; }
-        .price-box { text-align: right; }
-        .price { font-size: 16px; font-weight: bold; }
-        .change { font-size: 12px; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px; }
-        .up { background: rgba(0, 255, 136, 0.2); color: #00ff88; }
-        .down { background: rgba(255, 68, 68, 0.2); color: #ff4444; }
-        .nav-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: #111; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #333; }
-        .nav-item { text-align: center; font-size: 10px; color: #888; }
+        :root { --bg: #0a0a0a; --card: #161616; --green: #00ff88; --red: #ff4444; --text: #ffffff; }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; padding: 15px; }
+        .search-box { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #333; background: #1a1a1a; color: #fff; margin-bottom: 20px; box-sizing: border-box; }
+        .hisse-list { display: flex; flex-direction: column; gap: 10px; padding-bottom: 80px; }
+        .hisse-card { background: var(--card); padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #222; }
+        .code { font-weight: bold; font-size: 16px; }
+        .price { font-weight: bold; text-align: right; }
+        .up { color: var(--green); } .down { color: var(--red); }
+        .footer { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(10,10,10,0.9); display: flex; justify-content: space-around; padding: 15px; border-top: 1px solid #333; }
     </style>
 </head>
 <body>
-    <div class="header">Vay canına Yatırımcı! 🔥</div>
-    <div class="sub-header">LXGYO, GENKM tavanda 🚀</div>
-
-    <div class="hisse-list" id="hisse-container">
+    <input type="text" id="ara" class="search-box" placeholder="🔍 Hisse ara (THYAO, SASA...)" onkeyup="hisseAra()">
+    
+    <div class="hisse-list" id="liste">
         </div>
 
-    <div class="nav-bar">
-        <div class="nav-item">🏠<br>Anasayfa</div>
-        <div class="nav-item">🏢<br>Kurumsal</div>
-        <div class="nav-item">📄<br>Bülten</div>
-        <div class="nav-item">💼<br>Fon</div>
-    </div>
+    <div class="footer"><span>🏠 Ana</span> <span>🏢 Kurum</span> <span>📄 Bülten</span></div>
 
     <script>
-        // Örnek Veri (Normalde API'den çekilir)
-        const hisseler = [
-            {kod: "LXGYO", ad: "LUXERA GMYO", fiyat: "17.40", degisim: "9.99"},
-            {kod: "THYAO", ad: "TURK HAVA YOLLARI", fiyat: "296.00", degisim: "1.25"},
-            {kod: "SAHOL", ad: "SABANCI HOLDING", fiyat: "89.00", degisim: "-1.22"},
-            {kod: "GENKM", ad: "GENTAS KIMYA", fiyat: "14.69", degisim: "9.96"}
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.ready();
+
+        // BIST'in en popüler hisseleri (Buraya istediğin kadar ekleyebilirsin)
+        const tumHisseler = [
+            {s: "LXGYO", f: 17.40, d: 9.99}, {s: "GENKM", f: 14.69, d: 9.96},
+            {s: "THYAO", f: 296.00, d: 1.25}, {s: "SAHOL", f: 89.00, d: -1.22},
+            {s: "ASELS", f: 330.50, d: -1.78}, {s: "TUPRS", f: 255.25, d: 0.29},
+            {s: "BIMAS", f: 691.00, d: 1.78}, {s: "KCHOL", f: 191.30, d: 0.93},
+            {s: "SASA", f: 38.40, d: -0.45}, {s: "EREGL", f: 45.12, d: 0.10},
+            {s: "ASTOR", f: 206.50, d: 0.63}, {s: "FROTO", f: 980.00, d: 2.10},
+            {s: "KONTR", f: 245.00, d: -1.20}, {s: "PEKGY", f: 14.02, d: 4.63},
+            {s: "ISCTR", f: 13.15, d: 0.23}, {s: "AKBNK", f: 42.10, d: -0.80}
         ];
 
-        const container = document.getElementById('hisse-container');
-        hisseler.forEach(h => {
-            const statusClass = parseFloat(h.degisim) >= 0 ? 'up' : 'down';
-            container.innerHTML += `
-                <div class="hisse-item">
-                    <div class="hisse-info">
-                        <div class="logo">${h.kod[0]}</div>
-                        <div class="name-box">
-                            <div class="code">${h.kod}</div>
-                            <div class="full-name">${h.ad}</div>
-                        </div>
-                    </div>
-                    <div class="price-box">
-                        <div class="price">${h.fiyat}₺</div>
-                        <div class="change ${statusClass}">${h.degisim}%</div>
-                    </div>
-                </div>`;
-        });
+        function listele(filtre = "") {
+            const container = document.getElementById('liste');
+            container.innerHTML = "";
+            tumHisseler.filter(h => h.s.includes(filtre.toUpperCase())).forEach(h => {
+                const cls = h.d >= 0 ? 'up' : 'down';
+                container.innerHTML += `
+                    <div class="hisse-card">
+                        <div class="code">${h.s}</div>
+                        <div class="price">${h.f.toFixed(2)} ₺ <br> <span class="${cls}">%${h.d}</span></div>
+                    </div>`;
+            });
+        }
 
-        // Telegram WebApp'i başlat
-        const tg = window.Telegram.WebApp;
-        tg.expand(); // Uygulamayı tam ekran yap
+        function hisseAra() {
+            const aramaTerimi = document.getElementById('ara').value;
+            listele(aramaTerimi);
+        }
+
+        listele(); // İlk açılışta hepsini göster
     </script>
 </body>
 </html>
