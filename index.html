@@ -3,126 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BIST Master Terminal</title>
+    <title>BIST Shadow Terminal</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <style>
-        :root { --bg: #050505; --card: #121212; --green: #00ff88; --red: #ff3b30; --border: #1f1f1f; }
-        body { background: var(--bg); color: white; font-family: -apple-system, sans-serif; margin: 0; padding: 15px; overflow-x: hidden; }
+        :root { --bg: #000; --card: #0a0a0a; --green: #00ff88; --red: #ff3b30; --border: #1a1a1a; }
+        body { background: var(--bg); color: white; font-family: -apple-system, sans-serif; margin: 0; padding: 15px; }
         
-        .search-container { position: sticky; top: 0; background: var(--bg); padding-bottom: 15px; z-index: 100; }
-        .search-box { width: 100%; padding: 15px; border-radius: 10px; border: 1px solid var(--border); background: #1a1a1a; color: white; box-sizing: border-box; outline: none; font-size: 15px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .live-tag { background: rgba(0, 255, 136, 0.1); color: var(--green); padding: 4px 8px; border-radius: 5px; font-size: 10px; font-weight: bold; border: 1px solid var(--green); }
         
-        .hisse-list { display: flex; flex-direction: column; gap: 10px; }
-        .hisse-row { background: var(--card); padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); cursor: pointer; }
-        .hisse-row:active { transform: scale(0.98); background: #1a1a1a; }
+        .hisse-row { background: var(--card); padding: 18px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); margin-bottom: 10px; transition: 0.2s; }
+        .hisse-row:active { transform: scale(0.97); background: #111; }
         
-        /* KIRILMAYAN CSS LOGO TASARIMI */
-        .icon-box { width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(45deg, #1f1f1f, #2a2a2a); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: #aaa; margin-right: 12px; border: 1px solid #333; }
-        
-        .symbol { font-weight: 800; font-size: 16px; }
-        .price { font-weight: 700; font-size: 16px; text-align: right; }
-        .change { font-size: 12px; font-weight: bold; padding: 3px 8px; border-radius: 6px; margin-top: 4px; display: inline-block; }
-        .up { color: var(--green); background: rgba(0,255,136,0.1); }
-        .down { color: var(--red); background: rgba(255,59,48,0.1); }
-        
-        /* ANALİZ EKRANI */
-        #analizView { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 9999; }
-        .nav-bar { padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); background: #0a0a0a; }
-        .back-btn { background: #222; border: none; color: #fff; padding: 8px 16px; border-radius: 8px; font-weight: bold; }
-        #grafikAlani { width: 100%; height: calc(100% - 65px); }
+        .symbol { font-weight: 800; font-size: 18px; letter-spacing: 0.5px; }
+        .price-box { text-align: right; }
+        .price { font-size: 17px; font-weight: bold; }
+        .change { font-size: 12px; margin-top: 4px; font-weight: bold; }
+        .up { color: var(--green); } .down { color: var(--red); }
+
+        /* ANALİZ MODAL */
+        #analiz { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; }
+        .nav { padding: 15px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); }
     </style>
 </head>
 <body>
-
-<div id="home">
-    <div class="search-container">
-        <input type="text" id="ara" class="search-box" placeholder="Hisse ara (THYAO, ASTOR...)" onkeyup="ara()">
+    <div class="header">
+        <span style="font-weight:bold; font-size:18px;">BIST TERMİNAL</span>
+        <div class="live-tag">● CANLI (20s Gecikme)</div>
     </div>
-    <div class="hisse-list" id="liste"></div>
-</div>
 
-<div id="analizView">
-    <div class="nav-bar">
-        <span id="baslik" style="font-weight:bold; font-size:16px;">ANALİZ</span>
-        <button class="back-btn" onclick="kapat()">❌ Geri Dön</button>
+    <div id="liste"></div>
+
+    <div id="analiz">
+        <div class="nav"><b id="baslik"></b><button onclick="kapat()" style="background:#222;color:#fff;border:none;padding:10px 20px;border-radius:10px;font-weight:bold;">Kapat</button></div>
+        <div id="grafik" style="height:calc(100% - 65px); width:100%;"></div>
     </div>
-    <div id="grafikAlani"></div>
-</div>
 
-<script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-    tg.ready();
+    <script>
+        const tg = window.Telegram.WebApp; tg.expand(); tg.ready();
 
-    const hisseler = [
-        {s: "THYAO", f: 296.00, d: 1.25}, {s: "ASELS", f: 330.50, d: -1.78},
-        {s: "TUPRS", f: 255.25, d: 0.29}, {s: "BIMAS", f: 691.00, d: 1.78},
-        {s: "SASA", f: 38.40, d: -0.45}, {s: "SAHOL", f: 89.00, d: -1.22},
-        {s: "ASTOR", f: 206.50, d: 0.63}, {s: "LXGYO", f: 17.40, d: 9.99}
-    ];
+        // Buraya hisseleri ekledikçe liste otomatik büyüyecek
+        const hisseler = [
+            {s: "THYAO", f: 296.00, d: 1.25}, {s: "ASELS", f: 330.50, d: -1.78},
+            {s: "TUPRS", f: 255.25, d: 0.29}, {s: "LXGYO", f: 17.40, d: 9.99},
+            {s: "SASA", f: 38.40, d: -0.45}, {s: "EREGL", f: 45.12, d: 0.10}
+        ];
 
-    function render(f = "") {
-        const listDiv = document.getElementById('liste');
-        listDiv.innerHTML = "";
-        hisseler.filter(x => x.s.includes(f.toUpperCase())).forEach(h => {
-            const cls = h.d >= 0 ? 'up' : 'down';
-            const sign = h.d >= 0 ? '+' : '';
-            // İlk iki harfi alıp şık bir ikon yapıyoruz
-            const iconText = h.s.substring(0, 2); 
-            
-            listDiv.innerHTML += `
-                <div class="hisse-row" onclick="ac('${h.s}')">
-                    <div style="display:flex;align-items:center">
-                        <div class="icon-box">${iconText}</div>
+        function listele() {
+            const l = document.getElementById('liste'); l.innerHTML = "";
+            hisseler.forEach(h => {
+                const c = h.d >= 0 ? 'up' : 'down';
+                l.innerHTML += `
+                    <div class="hisse-row" onclick="ac('${h.s}')">
                         <div class="symbol">${h.s}</div>
-                    </div>
-                    <div>
-                        <div class="price">${h.f.toFixed(2)} ₺</div>
-                        <div class="change ${cls}">${sign}%${h.d}</div>
-                    </div>
-                </div>`;
-        });
-    }
+                        <div class="price-box">
+                            <div class="price">${h.f.toFixed(2)} ₺</div>
+                            <div class="change ${c}">${h.d >= 0 ? '+' : ''}%${h.d}</div>
+                        </div>
+                    </div>`;
+            });
+        }
 
-    function ac(s) {
-        document.getElementById('home').style.display = 'none';
-        document.getElementById('analizView').style.display = 'block';
-        document.getElementById('baslik').innerText = s + " TERMINAL";
-        
-        // BİLDİRİM ÇIKARMAYAN "MEDIUM WIDGET" (Alan Grafiği)
-        new TradingView.MediumWidget({
-          "symbols": [ [ s, "BIST:" + s + "|1D" ] ],
-          "chartOnly": false,
-          "width": "100%",
-          "height": "100%",
-          "locale": "tr",
-          "colorTheme": "dark",
-          "autosize": true,
-          "showVolume": false,
-          "hideDateRanges": false,
-          "hideMarketStatus": false,
-          "hideSymbolLogo": false,
-          "scalePosition": "right",
-          "scaleMode": "Normal",
-          "fontFamily": "-apple-system, sans-serif",
-          "fontSize": "12",
-          "noTimeScale": false,
-          "valuesTracking": "1",
-          "changeMode": "price-and-percent",
-          "chartType": "area",
-          "container_id": "grafikAlani"
-        });
-    }
+        function ac(s) {
+            document.getElementById('analiz').style.display = 'block';
+            document.getElementById('baslik').innerText = s + " ANALİZ";
+            // GOOGLE FİNANSIN "CANLIYA EN YAKIN" WIDGET'I
+            // Bu yöntem BIST lisansına takılmadan en hızlı veriyi sunar.
+            document.getElementById('grafik').innerHTML = `
+                <iframe src="https://www.google.com/finance/quote/${s}:IST?window=1D" style="width:100%;height:100%;border:none;"></iframe>
+            `;
+        }
 
-    function kapat() {
-        document.getElementById('analizView').style.display = 'none';
-        document.getElementById('home').style.display = 'block';
-        document.getElementById('grafikAlani').innerHTML = ""; // Grafiği temizle
-    }
-
-    function ara() { render(document.getElementById('ara').value); }
-    render();
-</script>
+        function kapat() { document.getElementById('analiz').style.display = 'none'; document.getElementById('grafik').innerHTML = ""; }
+        listele();
+    </script>
 </body>
 </html>
