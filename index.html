@@ -5,62 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BIST Pro Terminal</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <style>
         :root { --bg: #0a0a0a; --card: #161616; --green: #00ff88; --red: #ff4444; --text: #ffffff; }
         body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; padding: 15px; }
         .search-box { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #333; background: #1a1a1a; color: #fff; margin-bottom: 20px; box-sizing: border-box; }
-        .hisse-list { display: flex; flex-direction: column; gap: 10px; padding-bottom: 80px; }
-        .hisse-card { background: var(--card); padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #222; }
+        .hisse-list { display: flex; flex-direction: column; gap: 10px; padding-bottom: 20px; }
+        .hisse-card { background: var(--card); padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #222; cursor: pointer; transition: 0.2s; }
+        .hisse-card:active { transform: scale(0.98); background: #222; }
+        .logo-box { width: 38px; height: 38px; background: linear-gradient(45deg, #222, #333); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 12px; color: #aaa; font-size: 14px; border: 1px solid #444; }
+        .flex-row { display: flex; align-items: center; }
         .code { font-weight: bold; font-size: 16px; }
         .price { font-weight: bold; text-align: right; }
         .up { color: var(--green); } .down { color: var(--red); }
-        .footer { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(10,10,10,0.9); display: flex; justify-content: space-around; padding: 15px; border-top: 1px solid #333; }
+        
+        /* Detay Ekranı (Tıklayınca Açılan Yer) */
+        #detailModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 1000; overflow-y: auto; }
+        .modal-header { padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; background: #111; }
+        .close-btn { background: #333; color: #fff; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .premium-lock { background: #1a1a1a; margin: 15px; padding: 20px; border-radius: 10px; border: 1px dashed #444; text-align: center; }
     </style>
 </head>
 <body>
-    <input type="text" id="ara" class="search-box" placeholder="🔍 Hisse ara (THYAO, SASA...)" onkeyup="hisseAra()">
-    
-    <div class="hisse-list" id="liste">
-        </div>
+    <div id="mainScreen">
+        <input type="text" id="ara" class="search-box" placeholder="🔍 Hisse ara (THYAO, SASA...)" onkeyup="hisseAra()">
+        <div class="hisse-list" id="liste"></div>
+    </div>
 
-    <div class="footer"><span>🏠 Ana</span> <span>🏢 Kurum</span> <span>📄 Bülten</span></div>
-
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        tg.ready();
-
-        // BIST'in en popüler hisseleri (Buraya istediğin kadar ekleyebilirsin)
-        const tumHisseler = [
-            {s: "LXGYO", f: 17.40, d: 9.99}, {s: "GENKM", f: 14.69, d: 9.96},
-            {s: "THYAO", f: 296.00, d: 1.25}, {s: "SAHOL", f: 89.00, d: -1.22},
-            {s: "ASELS", f: 330.50, d: -1.78}, {s: "TUPRS", f: 255.25, d: 0.29},
-            {s: "BIMAS", f: 691.00, d: 1.78}, {s: "KCHOL", f: 191.30, d: 0.93},
-            {s: "SASA", f: 38.40, d: -0.45}, {s: "EREGL", f: 45.12, d: 0.10},
-            {s: "ASTOR", f: 206.50, d: 0.63}, {s: "FROTO", f: 980.00, d: 2.10},
-            {s: "KONTR", f: 245.00, d: -1.20}, {s: "PEKGY", f: 14.02, d: 4.63},
-            {s: "ISCTR", f: 13.15, d: 0.23}, {s: "AKBNK", f: 42.10, d: -0.80}
-        ];
-
-        function listele(filtre = "") {
-            const container = document.getElementById('liste');
-            container.innerHTML = "";
-            tumHisseler.filter(h => h.s.includes(filtre.toUpperCase())).forEach(h => {
-                const cls = h.d >= 0 ? 'up' : 'down';
-                container.innerHTML += `
-                    <div class="hisse-card">
-                        <div class="code">${h.s}</div>
-                        <div class="price">${h.f.toFixed(2)} ₺ <br> <span class="${cls}">%${h.d}</span></div>
-                    </div>`;
-            });
-        }
-
-        function hisseAra() {
-            const aramaTerimi = document.getElementById('ara').value;
-            listele(aramaTerimi);
-        }
-
-        listele(); // İlk açılışta hepsini göster
-    </script>
-</body>
-</html>
+    <div id="detailModal">
+        <div class="modal-header">
+            <h3 id="modalTitle" style="
