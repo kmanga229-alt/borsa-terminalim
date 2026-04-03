@@ -3,58 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BIST Pro Terminal</title>
+    <title>BIST Master</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <style>
-        :root { --bg: #000000; --card: #111111; --green: #00ff88; --red: #ff4444; --border: #222; }
-        body { background: var(--bg); color: white; font-family: -apple-system, sans-serif; margin: 0; padding: 15px; }
+        :root { --bg: #000000; --card: #0f0f0f; --green: #00ff88; --red: #ff4444; --border: #1e1e1e; }
+        body { background: var(--bg); color: white; font-family: -apple-system, system-ui, sans-serif; margin: 0; padding: 15px; overflow-x: hidden; }
         
-        /* Arama Kutusu */
-        .search-container { position: sticky; top: 0; background: var(--bg); padding-bottom: 15px; z-index: 100; }
-        .search-input { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--border); background: #1a1a1a; color: white; font-size: 16px; box-sizing: border-box; outline: none; }
+        /* Arama Çubuğu - Üstte Sabit */
+        .header-nav { position: sticky; top: 0; background: var(--bg); padding: 5px 0 15px 0; z-index: 1000; }
+        .search-input { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid var(--border); background: #111; color: white; font-size: 15px; box-sizing: border-box; outline: none; }
 
-        /* Hisse Kartı Tasarımı */
-        .hisse-list { display: flex; flex-direction: column; gap: 10px; padding-bottom: 80px; }
-        .hisse-card { background: var(--card); padding: 16px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); cursor: pointer; transition: 0.2s; }
-        .hisse-card:active { transform: scale(0.96); background: #1a1a1a; }
+        /* Hisse Listesi */
+        .hisse-container { display: flex; flex-direction: column; gap: 8px; margin-bottom: 50px; }
+        .hisse-row { background: var(--card); padding: 16px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); cursor: pointer; }
+        .hisse-row:active { background: #1a1a1a; transform: scale(0.98); }
         
-        .left-side { display: flex; align-items: center; gap: 15px; }
-        .logo { width: 42px; height: 42px; border-radius: 10px; background: white; object-fit: contain; padding: 3px; }
-        .symbol { font-weight: 800; font-size: 17px; }
-        .company-name { font-size: 11px; color: #777; margin-top: 2px; }
+        .info-left { display: flex; align-items: center; gap: 12px; }
+        .logo-circle { width: 40px; height: 40px; border-radius: 8px; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .logo-circle img { width: 85%; height: 85%; object-fit: contain; }
+        .symbol-text { font-weight: 700; font-size: 16px; }
+        .name-text { font-size: 11px; color: #666; margin-top: 2px; }
 
-        .right-side { text-align: right; }
-        .price { font-weight: 700; font-size: 16px; }
-        .change { font-size: 12px; font-weight: bold; margin-top: 4px; display: inline-block; padding: 2px 6px; border-radius: 4px; }
+        .info-right { text-align: right; }
+        .price-text { font-weight: 600; font-size: 15px; }
+        .change-text { font-size: 12px; font-weight: bold; margin-top: 4px; display: inline-block; padding: 2px 6px; border-radius: 4px; }
         .up { color: var(--green); background: rgba(0,255,136,0.1); }
         .down { color: var(--red); background: rgba(255,68,68,0.1); }
 
-        /* Analiz Paneli (Modal) */
-        #analizModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 1000; overflow-y: auto; }
-        .modal-nav { padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
-        .close-btn { background: #333; border: none; color: white; padding: 10px 20px; border-radius: 10px; font-weight: bold; }
+        /* Grafik Katmanı */
+        #chartOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 2000; }
+        .top-bar { padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .back-button { background: #222; border: none; color: #fff; padding: 8px 16px; border-radius: 8px; font-weight: 600; }
     </style>
 </head>
 <body>
 
-<div id="homePage">
-    <div class="search-container">
-        <input type="text" id="araInput" class="search-input" placeholder="🔍 Hisse ara (THYAO, SASA, ASUZU...)" onkeyup="filtrele()">
+<div id="home">
+    <div class="header-nav">
+        <input type="text" id="search" class="search-input" placeholder="Hisse ara (THYAO, SASA...)" onkeyup="filterList()">
     </div>
-    <div class="hisse-list" id="hisseListe"></div>
+    <div class="hisse-container" id="list"></div>
 </div>
 
-<div id="analizModal">
-    <div class="modal-nav">
-        <span id="modalHisseAd" style="font-size:18px; font-weight:bold;">ANALİZ</span>
-        <button class="close-btn" onclick="kapatAnaliz()">❌ Kapat</button>
+<div id="chartOverlay">
+    <div class="top-bar">
+        <span id="targetSymbol" style="font-weight:bold;">ANALİZ</span>
+        <button class="back-button" onclick="closeChart()">Geri</button>
     </div>
-    <div id="grafik_alani" style="height: 450px; width: 100%;"></div>
-    <div style="padding: 20px; text-align: center; color: #555; font-size: 12px; line-height: 1.6;">
-        📊 <b>Performans:</b> 1G, 1H, 1A, 1Y grafik üzerinden seçilebilir.<br>
-        🔒 <b>AKD & Takas:</b> BIST Düzey 2 lisansı gereklidir.
-    </div>
+    <div id="tv_chart" style="height: calc(100% - 60px); width: 100%;"></div>
 </div>
 
 <script>
@@ -62,68 +59,73 @@
     tg.expand();
     tg.ready();
 
-    // BIST LOGOLU ANA LİSTE (Logolar Clearbit üzerinden çekiliyor)
-    const hisseler = [
-        {s: "THYAO", n: "TURK HAVA YOLLARI", f: 296.00, d: 1.25, l: "thy.com"},
-        {s: "ASELS", n: "ASELSAN", f: 330.50, d: -1.78, l: "aselsan.com.tr"},
-        {s: "TUPRS", n: "TÜPRAŞ", f: 255.25, d: 0.29, l: "tupras.com.tr"},
-        {s: "BIMAS", n: "BİM MAĞAZALAR", f: 691.00, d: 1.78, l: "bim.com.tr"},
-        {s: "SASA", n: "SASA POLYESTER", f: 38.40, d: -0.45, l: "sasa.com.tr"},
-        {s: "EREGL", n: "EREĞLİ DEMİR ÇELİK", f: 45.12, d: 0.10, l: "erdemir.com.tr"},
-        {s: "SAHOL", n: "SABANCI HOLDİNG", f: 89.00, d: -1.22, l: "sabanci.com"},
-        {s: "KCHOL", n: "KOÇ HOLDİNG", f: 191.30, d: 0.93, l: "koc.com.tr"},
-        {s: "ASTOR", n: "ASTOR ENERJİ", f: 206.50, d: 0.63, l: "astor.com.tr"},
-        {s: "GENKM", n: "GENTAŞ KİMYA", f: 14.69, d: 9.96, l: "gentas.com.tr"},
-        {s: "LXGYO", n: "LUXERA GMYO", f: 17.40, d: 9.99, l: "luxera.com.tr"},
-        {s: "PEKGY", n: "PEKER GMYO", f: 14.02, d: 4.63, l: "pekergyo.com"},
-        {s: "ISCTR", n: "İŞ BANKASI (C)", f: 13.15, d: 0.23, l: "isbank.com.tr"}
+    // Hisse Verileri ve Logoları
+    const data = [
+        {s: "THYAO", n: "Turk Hava Yollari", f: 296.00, d: 1.25, l: "thy.com"},
+        {s: "ASELS", n: "Aselsan", f: 330.50, d: -1.78, l: "aselsan.com.tr"},
+        {s: "TUPRS", n: "Tupras", f: 255.25, d: 0.29, l: "tupras.com.tr"},
+        {s: "BIMAS", n: "Bim Magazalar", f: 691.00, d: 1.78, l: "bim.com.tr"},
+        {s: "SASA", n: "Sasa Polyester", f: 38.40, d: -0.45, l: "sasa.com.tr"},
+        {s: "EREGL", n: "Eregli Demir Celik", f: 45.12, d: 0.10, l: "erdemir.com.tr"},
+        {s: "SAHOL", n: "Sabanci Holding", f: 89.00, d: -1.22, l: "sabanci.com"},
+        {s: "ASTOR", n: "Astor Enerji", f: 206.50, d: 0.63, l: "astor.com.tr"},
+        {s: "LXGYO", n: "Luxera Gmyo", f: 17.40, d: 9.99, l: "luxera.com.tr"}
     ];
 
-    function renderListe(f = "") {
-        const list = document.getElementById('hisseListe');
-        list.innerHTML = "";
-        hisseler.filter(h => h.s.includes(f.toUpperCase())).forEach(h => {
-            const cls = h.d >= 0 ? 'up' : 'down';
-            const sign = h.d >= 0 ? '+' : '';
-            list.innerHTML += `
-                <div class="hisse-card" onclick="acAnaliz('${h.s}')">
-                    <div class="left-side">
-                        <img src="https://logo.clearbit.com/${h.l}" class="logo" onerror="this.src='https://ui-avatars.com/api/?name=${h.s}'">
-                        <div><div class="symbol">${h.s}</div><div class="company-name">${h.n}</div></div>
+    function render(filter = "") {
+        const listDiv = document.getElementById('list');
+        listDiv.innerHTML = "";
+        data.filter(x => x.s.includes(filter.toUpperCase())).forEach(item => {
+            const isUp = item.d >= 0;
+            listDiv.innerHTML += `
+                <div class="hisse-row" onclick="openChart('${item.s}')">
+                    <div class="info-left">
+                        <div class="logo-circle"><img src="https://logo.clearbit.com/${item.l}" onerror="this.src='https://ui-avatars.com/api/?name=${item.s}'"></div>
+                        <div><div class="symbol-text">${item.s}</div><div class="name-text">${item.n}</div></div>
                     </div>
-                    <div class="right-side">
-                        <div class="price">${h.f.toFixed(2)} ₺</div>
-                        <div class="change ${cls}">${sign}%${h.d}</div>
+                    <div class="info-right">
+                        <div class="price-text">${item.f.toFixed(2)} ₺</div>
+                        <div class="change-text ${isUp ? 'up' : 'down'}">${isUp ? '+' : ''}%${item.d}</div>
                     </div>
                 </div>`;
         });
     }
 
-    function filtrele() { renderListe(document.getElementById('araInput').value); }
+    function filterList() { render(document.getElementById('search').value); }
 
-    function acAnaliz(s) {
-        document.getElementById('homePage').style.display = 'none';
-        document.getElementById('analizModal').style.display = 'block';
-        document.getElementById('modalHisseAd').innerText = s + " ANALİZ";
+    function openChart(symbol) {
+        document.getElementById('home').style.display = 'none';
+        document.getElementById('chartOverlay').style.display = 'block';
+        document.getElementById('targetSymbol').innerText = symbol + " ANALİZ";
         
+        // TEMİZ GRAFİK AYARLARI (BİLDİRİM ÇIKARMAYAN MODEL)
         new TradingView.widget({
             "autosize": true,
-            "symbol": "BIST:" + s,
+            "symbol": "BIST:" + symbol,
             "interval": "D",
+            "timezone": "Europe/Istanbul",
             "theme": "dark",
             "style": "1",
             "locale": "tr",
-            "container_id": "grafik_alani"
+            "toolbar_bg": "#000000",
+            "enable_publishing": false,
+            "hide_top_toolbar": true,      // Üst barı siler
+            "hide_legend": true,           // Sol üst yazıyı siler
+            "save_image": false,           // Kamera butonunu siler
+            "container_id": "tv_chart",
+            "library_path": "charting_library/",
+            "disabled_features": ["use_localstorage_for_settings", "header_symbol_search", "symbol_info"], // Gereksiz pop-upları engeller
+            "enabled_features": ["hide_left_toolbar_by_default"]
         });
     }
 
-    function kapatAnaliz() {
-        document.getElementById('analizModal').style.display = 'none';
-        document.getElementById('homePage').style.display = 'block';
-        document.getElementById('grafik_alani').innerHTML = "";
+    function closeChart() {
+        document.getElementById('chartOverlay').style.display = 'none';
+        document.getElementById('home').style.display = 'block';
+        document.getElementById('tv_chart').innerHTML = "";
     }
 
-    renderListe();
+    render();
 </script>
 </body>
 </html>
