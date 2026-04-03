@@ -7,31 +7,123 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <style>
-        :root { --bg: #0a0a0a; --card: #161616; --green: #00ff88; --red: #ff4444; --text: #ffffff; }
-        body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; padding: 15px; }
-        .search-box { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #333; background: #1a1a1a; color: #fff; margin-bottom: 20px; box-sizing: border-box; }
-        .hisse-list { display: flex; flex-direction: column; gap: 10px; padding-bottom: 20px; }
-        .hisse-card { background: var(--card); padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #222; cursor: pointer; transition: 0.2s; }
-        .hisse-card:active { transform: scale(0.98); background: #222; }
-        .logo-box { width: 38px; height: 38px; background: linear-gradient(45deg, #222, #333); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 12px; color: #aaa; font-size: 14px; border: 1px solid #444; }
-        .flex-row { display: flex; align-items: center; }
-        .code { font-weight: bold; font-size: 16px; }
-        .price { font-weight: bold; text-align: right; }
-        .up { color: var(--green); } .down { color: var(--red); }
+        :root { --bg: #000000; --card: #111111; --green: #00ff88; --red: #ff4444; --border: #222; }
+        body { background: var(--bg); color: white; font-family: -apple-system, sans-serif; margin: 0; padding: 15px; }
         
-        /* Detay Ekranı (Tıklayınca Açılan Yer) */
-        #detailModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 1000; overflow-y: auto; }
-        .modal-header { padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; background: #111; }
-        .close-btn { background: #333; color: #fff; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .premium-lock { background: #1a1a1a; margin: 15px; padding: 20px; border-radius: 10px; border: 1px dashed #444; text-align: center; }
+        /* Arama Kutusu */
+        .search-container { position: sticky; top: 0; background: var(--bg); padding-bottom: 15px; z-index: 100; }
+        .search-input { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--border); background: #1a1a1a; color: white; font-size: 16px; box-sizing: border-box; outline: none; }
+
+        /* Hisse Kartı Tasarımı */
+        .hisse-list { display: flex; flex-direction: column; gap: 10px; padding-bottom: 80px; }
+        .hisse-card { background: var(--card); padding: 16px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); cursor: pointer; transition: 0.2s; }
+        .hisse-card:active { transform: scale(0.96); background: #1a1a1a; }
+        
+        .left-side { display: flex; align-items: center; gap: 15px; }
+        .logo { width: 42px; height: 42px; border-radius: 10px; background: white; object-fit: contain; padding: 3px; }
+        .symbol { font-weight: 800; font-size: 17px; }
+        .company-name { font-size: 11px; color: #777; margin-top: 2px; }
+
+        .right-side { text-align: right; }
+        .price { font-weight: 700; font-size: 16px; }
+        .change { font-size: 12px; font-weight: bold; margin-top: 4px; display: inline-block; padding: 2px 6px; border-radius: 4px; }
+        .up { color: var(--green); background: rgba(0,255,136,0.1); }
+        .down { color: var(--red); background: rgba(255,68,68,0.1); }
+
+        /* Analiz Paneli (Modal) */
+        #analizModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 1000; overflow-y: auto; }
+        .modal-nav { padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .close-btn { background: #333; border: none; color: white; padding: 10px 20px; border-radius: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div id="mainScreen">
-        <input type="text" id="ara" class="search-box" placeholder="🔍 Hisse ara (THYAO, SASA...)" onkeyup="hisseAra()">
-        <div class="hisse-list" id="liste"></div>
-    </div>
 
-    <div id="detailModal">
-        <div class="modal-header">
-            <h3 id="modalTitle" style="
+<div id="homePage">
+    <div class="search-container">
+        <input type="text" id="araInput" class="search-input" placeholder="🔍 Hisse ara (THYAO, SASA, ASUZU...)" onkeyup="filtrele()">
+    </div>
+    <div class="hisse-list" id="hisseListe"></div>
+</div>
+
+<div id="analizModal">
+    <div class="modal-nav">
+        <span id="modalHisseAd" style="font-size:18px; font-weight:bold;">ANALİZ</span>
+        <button class="close-btn" onclick="kapatAnaliz()">❌ Kapat</button>
+    </div>
+    <div id="grafik_alani" style="height: 450px; width: 100%;"></div>
+    <div style="padding: 20px; text-align: center; color: #555; font-size: 12px; line-height: 1.6;">
+        📊 <b>Performans:</b> 1G, 1H, 1A, 1Y grafik üzerinden seçilebilir.<br>
+        🔒 <b>AKD & Takas:</b> BIST Düzey 2 lisansı gereklidir.
+    </div>
+</div>
+
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.ready();
+
+    // BIST LOGOLU ANA LİSTE (Logolar Clearbit üzerinden çekiliyor)
+    const hisseler = [
+        {s: "THYAO", n: "TURK HAVA YOLLARI", f: 296.00, d: 1.25, l: "thy.com"},
+        {s: "ASELS", n: "ASELSAN", f: 330.50, d: -1.78, l: "aselsan.com.tr"},
+        {s: "TUPRS", n: "TÜPRAŞ", f: 255.25, d: 0.29, l: "tupras.com.tr"},
+        {s: "BIMAS", n: "BİM MAĞAZALAR", f: 691.00, d: 1.78, l: "bim.com.tr"},
+        {s: "SASA", n: "SASA POLYESTER", f: 38.40, d: -0.45, l: "sasa.com.tr"},
+        {s: "EREGL", n: "EREĞLİ DEMİR ÇELİK", f: 45.12, d: 0.10, l: "erdemir.com.tr"},
+        {s: "SAHOL", n: "SABANCI HOLDİNG", f: 89.00, d: -1.22, l: "sabanci.com"},
+        {s: "KCHOL", n: "KOÇ HOLDİNG", f: 191.30, d: 0.93, l: "koc.com.tr"},
+        {s: "ASTOR", n: "ASTOR ENERJİ", f: 206.50, d: 0.63, l: "astor.com.tr"},
+        {s: "GENKM", n: "GENTAŞ KİMYA", f: 14.69, d: 9.96, l: "gentas.com.tr"},
+        {s: "LXGYO", n: "LUXERA GMYO", f: 17.40, d: 9.99, l: "luxera.com.tr"},
+        {s: "PEKGY", n: "PEKER GMYO", f: 14.02, d: 4.63, l: "pekergyo.com"},
+        {s: "ISCTR", n: "İŞ BANKASI (C)", f: 13.15, d: 0.23, l: "isbank.com.tr"}
+    ];
+
+    function renderListe(f = "") {
+        const list = document.getElementById('hisseListe');
+        list.innerHTML = "";
+        hisseler.filter(h => h.s.includes(f.toUpperCase())).forEach(h => {
+            const cls = h.d >= 0 ? 'up' : 'down';
+            const sign = h.d >= 0 ? '+' : '';
+            list.innerHTML += `
+                <div class="hisse-card" onclick="acAnaliz('${h.s}')">
+                    <div class="left-side">
+                        <img src="https://logo.clearbit.com/${h.l}" class="logo" onerror="this.src='https://ui-avatars.com/api/?name=${h.s}'">
+                        <div><div class="symbol">${h.s}</div><div class="company-name">${h.n}</div></div>
+                    </div>
+                    <div class="right-side">
+                        <div class="price">${h.f.toFixed(2)} ₺</div>
+                        <div class="change ${cls}">${sign}%${h.d}</div>
+                    </div>
+                </div>`;
+        });
+    }
+
+    function filtrele() { renderListe(document.getElementById('araInput').value); }
+
+    function acAnaliz(s) {
+        document.getElementById('homePage').style.display = 'none';
+        document.getElementById('analizModal').style.display = 'block';
+        document.getElementById('modalHisseAd').innerText = s + " ANALİZ";
+        
+        new TradingView.widget({
+            "autosize": true,
+            "symbol": "BIST:" + s,
+            "interval": "D",
+            "theme": "dark",
+            "style": "1",
+            "locale": "tr",
+            "container_id": "grafik_alani"
+        });
+    }
+
+    function kapatAnaliz() {
+        document.getElementById('analizModal').style.display = 'none';
+        document.getElementById('homePage').style.display = 'block';
+        document.getElementById('grafik_alani').innerHTML = "";
+    }
+
+    renderListe();
+</script>
+</body>
+</html>
