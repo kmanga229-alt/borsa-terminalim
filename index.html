@@ -3,100 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BIST Terminal</title>
+    <title>BIST Terminal Pro</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root { --bg: #000; --card: #111; --green: #00ff88; --red: #ff3b30; --border: #222; }
-        body { background: var(--bg); color: white; font-family: -apple-system, sans-serif; margin: 0; padding: 15px; overflow-x: hidden; }
-        
-        /* Arama */
-        .search-container { position: sticky; top: 0; background: var(--bg); padding-bottom: 15px; z-index: 100; }
-        .search-box { width: 100%; padding: 15px; border-radius: 10px; border: 1px solid var(--border); background: #1a1a1a; color: white; outline: none; font-size: 15px; box-sizing: border-box; }
-        
-        /* Liste */
-        .hisse-list { display: flex; flex-direction: column; gap: 8px; }
-        .hisse-row { background: var(--card); padding: 16px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); cursor: pointer; }
-        
-        .icon-box { width: 38px; height: 38px; border-radius: 50%; background: #222; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 1px solid #333; color: #888; }
-        .symbol { font-weight: 800; font-size: 16px; }
-        .price { font-weight: 700; text-align: right; }
-        .change { font-size: 12px; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-top: 4px; display: inline-block; }
-        .up { color: var(--green); background: rgba(0,255,136,0.1); }
-        .down { color: var(--red); background: rgba(255,59,48,0.1); }
-
-        /* ANALİZ EKRANI */
-        #analizView { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; }
-        .nav-bar { padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; }
-        .back-btn { background: #333; border: none; color: #fff; padding: 8px 15px; border-radius: 8px; font-weight: bold; }
-        #chartContainer { width: 100%; height: calc(100% - 60px); border: none; }
+        body { background: var(--bg); color: white; font-family: -apple-system, sans-serif; margin: 0; padding: 10px; }
+        .search-box { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--border); background: #1a1a1a; color: white; margin-bottom: 15px; box-sizing: border-box; outline: none; }
+        .hisse-list { display: flex; flex-direction: column; gap: 8px; padding-bottom: 50px; }
+        .hisse-card { background: var(--card); padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); cursor: pointer; }
+        .hisse-card:active { background: #222; }
+        .icon { width: 40px; height: 40px; border-radius: 10px; background: #222; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #555; border: 1px solid #333; margin-right: 12px; }
+        .btn-group { display: flex; gap: 5px; }
+        .btn { padding: 6px 12px; border-radius: 6px; border: none; font-weight: bold; color: white; font-size: 12px; cursor: pointer; }
+        .btn-ana { background: #007aff; } .btn-graf { background: #34c759; }
+        #analiz { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 10000; }
+        iframe { width: 100%; height: calc(100% - 60px); border: none; }
+        .nav { padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; }
     </style>
 </head>
 <body>
-
-<div id="home">
-    <div class="search-container">
-        <input type="text" id="ara" class="search-box" placeholder="Hisse ara (Örn: THYAO, SASA)" onkeyup="ara()">
-    </div>
+    <input type="text" id="ara" class="search-box" placeholder="Hisse ara (SASA, THYAO, EREGL...)" onkeyup="ara()">
     <div class="hisse-list" id="liste"></div>
-</div>
 
-<div id="analizView">
-    <div class="nav-bar">
-        <span id="baslik" style="font-weight:bold;">ANALİZ</span>
-        <button class="back-btn" onclick="kapat()">Kapat</button>
+    <div id="analiz">
+        <div class="nav"><b id="baslik"></b><button onclick="kapat()" style="background:#333;color:#fff;border:none;padding:10px;border-radius:8px;">Kapat</button></div>
+        <div id="grafik-alan"></div>
     </div>
-    <div id="chartContainer" style="height: calc(100% - 60px);"></div>
-</div>
 
-<script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-    tg.ready();
-
-    // Hisse Verileri (Örnek Fiyatlar)
-    const hisseler = [
-        {s: "THYAO", f: 296.00, d: 1.25}, {s: "ASELS", f: 330.50, d: -1.78},
-        {s: "TUPRS", f: 255.25, d: 0.29}, {s: "BIMAS", f: 691.00, d: 1.78},
-        {s: "SASA", f: 38.40, d: -0.45}, {s: "SAHOL", f: 89.00, d: -1.22},
-        {s: "LXGYO", f: 17.40, d: 9.99}, {s: "ASTOR", f: 206.50, d: 0.63}
-    ];
-
-    function render(f = "") {
-        const listDiv = document.getElementById('liste');
-        listDiv.innerHTML = "";
-        hisseler.filter(x => x.s.includes(f.toUpperCase())).forEach(h => {
-            const cls = h.d >= 0 ? 'up' : 'down';
-            listDiv.innerHTML += `
-                <div class="hisse-row" onclick="ac('${h.s}')">
-                    <div style="display:flex;align-items:center">
-                        <div class="icon-box">${h.s.substring(0,2)}</div>
-                        <div class="symbol">${h.s}</div>
-                    </div>
-                    <div class="price">
-                        <div>${h.f.toFixed(2)} ₺</div>
-                        <div class="change ${cls}">%${h.d}</div>
-                    </div>
-                </div>`;
-        });
-    }
-
-    function ac(s) {
-        document.getElementById('home').style.display = 'none';
-        document.getElementById('analizView').style.display = 'block';
-        document.getElementById('baslik').innerText = s + " ANALİZ";
+    <script>
+        const tg = window.Telegram.WebApp; tg.expand(); tg.ready();
         
-        // GOOGLE FİNANS ÜZERİNDEN ENGEL KOYULMAYAN TEMİZ GRAFİK
-        const ticker = "BIST:" + s;
-        document.getElementById('chartContainer').innerHTML = `<iframe src="https://www.google.com/finance/quote/${s}:IST?window=1D" style="width:100%;height:100%;border:none;"></iframe>`;
-    }
+        // BIST 100 Hisseleri (En çok işlem görenler)
+        const hisseler = [
+            {s:"THYAO", n:"Türk Hava Yolları"}, {s:"ASELS", n:"Aselsan"}, {s:"TUPRS", n:"Tüpraş"},
+            {s:"SASA", n:"Sasa Polyester"}, {s:"EREGL", n:"Ereğli Demir Çelik"}, {s:"KCHOL", n:"Koç Holding"},
+            {s:"SAHOL", n:"Sabancı Holding"}, {s:"SISE", n:"Şişecam"}, {s:"BIMAS", n:"Bim Mağazalar"},
+            {s:"AKBNK", n:"Akbank"}, {s:"ISCTR", n:"İş Bankası"}, {s:"GARAN", n:"Garanti BBVA"},
+            {s:"EKGYO", n:"Emlak Konut"}, {s:"ASTOR", n:"Astor Enerji"}, {s:"KONTR", n:"Kontrolmatik"},
+            {s:"HEKTS", n:"Hektaş"}, {s:"ARCLK", n:"Arçelik"}, {s:"PGSUS", n:"Pegasus"},
+            {s:"DOAS", n:"Doğuş Otomotiv"}, {s:"TOASO", n:"Tofaş Oto"}, {s:"FROTO", n:"Ford Otosan"},
+            {s:"PETKM", n:"Petkim"}, {s:"ENKAI", n:"Enka İnşaat"}, {s:"KARDM", n:"Kardemir D"},
+            {s:"GUBRF", n:"Gübre Fabrikaları"}, {s:"OYAKC", n:"Oyak Çimento"}, {s:"EUPWR", n:"Europower"},
+            {s:"YEOTK", n:"Yeo Teknoloji"}, {s:"ALARK", n:"Alarko Holding"}, {s:"CANTE", n:"Çan2 Termik"}
+        ];
 
-    function kapat() {
-        document.getElementById('analizView').style.display = 'none';
-        document.getElementById('home').style.display = 'block';
-    }
+        function listele(f = "") {
+            const l = document.getElementById('liste'); l.innerHTML = "";
+            hisseler.filter(h => h.s.includes(f.toUpperCase())).forEach(h => {
+                l.innerHTML += `
+                    <div class="hisse-card">
+                        <div style="display:flex;align-items:center">
+                            <div class="icon">${h.s.substring(0,2)}</div>
+                            <div><b>${h.s}</b><br><small style="color:#555">${h.n}</small></div>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-ana" onclick="analiz('${h.s}', 'y')">Yahoo</button>
+                            <button class="btn btn-graf" onclick="analiz('${h.s}', 'g')">Google</button>
+                        </div>
+                    </div>`;
+            });
+        }
 
-    function ara() { render(document.getElementById('ara').value); }
-    render();
-</script>
+        function analiz(s, tip) {
+            document.getElementById('analiz').style.display = 'block';
+            document.getElementById('baslik').innerText = s + " ANALİZ";
+            const alan = document.getElementById('grafik-alan');
+            
+            if(tip === 'y') {
+                // Yahoo Finance - En sağlam veri
+                alan.innerHTML = `<iframe src="https://finance.yahoo.com/quote/${s}.IS"></iframe>`;
+            } else {
+                // Google Finance - Hızlı özet
+                alan.innerHTML = `<iframe src="https://www.google.com/finance/quote/${s}:IST"></iframe>`;
+            }
+        }
+
+        function kapat() { document.getElementById('analiz').style.display='none'; document.getElementById('grafik-alan').innerHTML=""; }
+        function ara() { listele(document.getElementById('ara').value); }
+        listele();
+    </script>
 </body>
 </html>
