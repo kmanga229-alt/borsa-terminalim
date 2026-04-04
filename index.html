@@ -1,100 +1,37 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BIST Master Terminal v51</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --bg: #000; --card: #0d0d0d; --green: #00ff88; --border: #1a1a1a; }
-        body { background: var(--bg); color: white; font-family: -apple-system, sans-serif; margin: 0; padding: 15px; overflow-x: hidden; }
-        
-        .header { position: sticky; top: 0; background: var(--bg); z-index: 100; padding: 10px 0; border-bottom: 1px solid var(--border); }
-        .search-box { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--border); background: #111; color: white; margin-bottom: 20px; box-sizing: border-box; outline: none; }
-        
-        .hisse-list { display: flex; flex-direction: column; gap: 8px; padding-bottom: 80px; }
-        .hisse-row { background: var(--card); padding: 10px 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); height: 65px; cursor: pointer; }
-        
-        .logo-box { width: 40px; height: 40px; border-radius: 50%; background: #fff; margin-right: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 2px solid #1a1a1a; flex-shrink: 0; }
-        .logo-box img { width: 85%; height: 85%; object-fit: contain; }
-        
-        .symbol { font-weight: 800; font-size: 16px; flex: 1; }
-
-        /* 🎯 Sniper Price Engine: Google Finance Güncel Fiyat */
-        .price-engine { width: 135px; height: 45px; overflow: hidden; border-radius: 8px; position: relative; background: #000; }
-        .price-iframe { border: none; width: 160px; height: 160px; position: absolute; top: -55px; right: -15px; pointer-events: none; }
-        
-        #analizView { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; }
-        .nav-bar { padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; }
+        body { background: #000; color: #00ff88; font-family: sans-serif; margin: 0; padding: 15px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn { background: #0d0d0d; border: 1px solid #1a1a1a; color: #fff; padding: 25px 10px; border-radius: 15px; text-align: center; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .btn:active { background: #00ff88; color: #000; }
+        .search { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #222; background: #111; color: white; margin-bottom: 20px; box-sizing: border-box; outline: none; }
     </style>
 </head>
 <body>
+    <div style="font-weight:900; font-size:22px; margin-bottom:15px;">BIST MASTER v53</div>
+    <input type="text" id="ara" class="search" placeholder="Hisse Ara (SASA, THYAO...)" onkeyup="filter()">
+    <div class="grid" id="liste"></div>
 
-<div id="home">
-    <div class="header"><div style="font-weight:900; font-size:22px; color:var(--green);">BIST MASTER v51</div></div>
-    <input type="text" id="ara" class="search-box" placeholder="Hisse ara (SASA, THYAO...)" onkeyup="ara()">
-    <div class="hisse-list" id="liste"></div>
-</div>
-
-<div id="analizView">
-    <div class="nav-bar">
-        <span id="baslik" style="font-weight:bold; color:var(--green);">ANALİZ</span>
-        <button onclick="kapat()" style="background:#222;color:white;border:none;padding:8px 15px;border-radius:8px;font-weight:bold;">Kapat</button>
-    </div>
-    <div id="iframeContainer" style="width:100%; height:calc(100% - 60px);"></div>
-</div>
-
-<script>
-    const tg = window.Telegram.WebApp; tg.expand(); tg.ready();
-
-    // 🚀 LOGO ID'leri (TradingView CDN)
-    const hisseler = [
-        {s: "THYAO", tv: "turkish-airlines"}, {s: "ASELS", tv: "aselsan"},
-        {s: "TUPRS", tv: "tupras"}, {s: "BIMAS", tv: "bim-birlesik-magazalar"},
-        {s: "SASA", tv: "sasa-polyester"}, {s: "SAHOL", tv: "sabanci-holding"},
-        {s: "KCHOL", tv: "koc-holding"}, {s: "MIATK", tv: "mia-teknoloji"},
-        {s: "KONTR", tv: "kontrolmatik"}, {s: "EREGL", tv: "eregli-demir-celik"},
-        {s: "ASTOR", tv: "astor-enerji"}, {s: "SISE", tv: "sise-cam"},
-        {s: "AKBNK", tv: "akbank"}, {s: "LXGYO", tv: "luxera-gayrimenkul"},
-        {s: "GENKM", tv: "gentas"}, {s: "REEDR", tv: "reeder-teknoloji"}
-    ];
-
-    function render(f = "") {
-        const listDiv = document.getElementById('liste');
-        listDiv.innerHTML = "";
-        hisseler.filter(x => x.s.includes(f.toUpperCase())).forEach(h => {
-            const logoUrl = `https://s3-symbol-logo.tradingview.com/${h.tv}--big.svg`;
-            listDiv.innerHTML += `
-                <div class="hisse-row" onclick="ac('${h.s}')">
-                    <div style="display:flex;align-items:center;flex:1;">
-                        <div class="logo-box">
-                            <img src="${logoUrl}" onerror="this.src='https://ui-avatars.com/api/?name=${h.s}&background=1a1a1a&color=fff'">
-                        </div>
-                        <div class="symbol">${h.s}</div>
-                    </div>
-                    <div class="price-engine">
-                        <iframe class="price-iframe" src="https://www.google.com/finance/quote/${h.s}:IST" loading="lazy"></iframe>
-                    </div>
-                </div>`;
-        });
-    }
-
-    function ac(s) {
-        document.getElementById('home').style.display = 'none';
-        document.getElementById('analizView').style.display = 'block';
-        document.getElementById('baslik').innerText = s + " ANALİZ";
-        const url = `https://s.tradingview.com/widgetembed/?symbol=BIST:${s}&interval=D&theme=dark&style=1&locale=tr`;
-        document.getElementById('iframeContainer').innerHTML = `<iframe src="${url}" style="width:100%;height:100%;border:none;"></iframe>`;
-    }
-
-    function kapat() {
-        document.getElementById('analizView').style.display = 'none';
-        document.getElementById('home').style.display = 'block';
-        document.getElementById('iframeContainer').innerHTML = "";
-    }
-
-    function ara() { render(document.getElementById('ara').value); }
-    render();
-</script>
+    <script>
+        const tg = window.Telegram.WebApp; tg.expand();
+        const hisseler = ["THYAO", "ASELS", "TUPRS", "SASA", "EREGL", "ASTOR", "KCHOL", "SAHOL", "MIATK", "KONTR", "REEDR", "DOAS", "FROTO", "BIMAS", "SISE", "AKBNK", "LXGYO", "GENKM"];
+        
+        function render(f = "") {
+            const l = document.getElementById('liste'); l.innerHTML = "";
+            hisseler.filter(s => s.includes(f.toUpperCase())).forEach(s => {
+                const d = document.createElement('div');
+                d.className = 'btn'; d.innerText = s;
+                d.onclick = () => { tg.sendData(s); tg.close(); };
+                l.appendChild(d);
+            });
+        }
+        function filter() { render(document.getElementById('ara').value); }
+        render();
+    </script>
 </body>
 </html>
