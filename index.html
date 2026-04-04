@@ -5,120 +5,79 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BIST PRO Terminal</title>
     <style>
-        :root { --bg: #050505; --card: #121212; --green: #00ff88; --red: #ff3b30; --border: #1f1f1f; --text: #e0e0e0; }
-        body { background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, sans-serif; margin: 0; padding: 20px; overflow-x: hidden; }
+        :root { --bg: #050505; --card: #121212; --green: #00ff88; --red: #ff3b30; --border: #1f1f1f; }
+        body { background: var(--bg); color: #fff; font-family: -apple-system, sans-serif; margin: 0; padding: 15px; }
         
-        /* Üst Başlık */
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        .logo-title { font-size: 22px; font-weight: 900; letter-spacing: -1px; color: var(--green); }
-        .live-indicator { font-size: 10px; background: rgba(0, 255, 136, 0.1); padding: 5px 10px; border-radius: 20px; border: 1px solid var(--green); color: var(--green); font-weight: bold; }
-
-        /* Arama Motoru */
-        .search-box { width: 100%; padding: 18px; border-radius: 15px; border: 1px solid var(--border); background: var(--card); color: white; font-size: 16px; margin-bottom: 20px; box-sizing: border-box; outline: none; transition: 0.3s; }
-        .search-box:focus { border-color: var(--green); box-shadow: 0 0 15px rgba(0, 255, 136, 0.1); }
-
-        /* Hisse Listesi Tasarımı */
-        .hisse-list { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 100px; }
-        .hisse-card { background: var(--card); padding: 18px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); cursor: pointer; transition: 0.2s; }
-        .hisse-card:hover { border-color: #333; background: #181818; transform: translateY(-2px); }
-        .hisse-card:active { transform: scale(0.96); }
-
-        .info-left { display: flex; align-items: center; gap: 15px; }
-        .symbol-icon { width: 45px; height: 45px; border-radius: 14px; background: #1a1a1a; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #666; border: 1px solid #333; font-size: 14px; }
-        .symbol-name { font-weight: 800; font-size: 17px; }
-        .full-name { font-size: 11px; color: #555; margin-top: 3px; }
-
-        .price-right { text-align: right; }
-        .view-btn { font-size: 12px; color: var(--green); font-weight: bold; background: rgba(0, 255, 136, 0.05); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(0, 255, 136, 0.2); }
-
-        /* Analiz Paneli */
-        #analizModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 9999; animation: slideUp 0.3s ease-out; }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .logo { font-size: 20px; font-weight: 900; color: var(--green); }
         
-        .nav-bar { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); background: #080808; }
-        .back-btn { background: #222; border: none; color: white; padding: 10px 20px; border-radius: 12px; font-weight: bold; font-size: 14px; cursor: pointer; }
-        .chart-frame { width: 100%; height: calc(100% - 70px); }
+        .search-box { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--border); background: var(--card); color: white; margin-bottom: 15px; box-sizing: border-box; outline: none; }
 
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
+        .hisse-list { display: flex; flex-direction: column; gap: 10px; }
+        .hisse-card { background: var(--card); padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); cursor: pointer; }
+        
+        /* Fiyat ve Değişim Alanı */
+        .price-info { text-align: right; min-width: 100px; height: 40px; }
+        
+        #analizModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; }
+        .nav { padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; }
+        .back-btn { background: #222; border: none; color: white; padding: 8px 15px; border-radius: 8px; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div class="logo-title">BIST PRO</div>
-        <div class="live-indicator">● CANLI VERİ (15S)</div>
+        <div class="logo">BIST PRO</div>
+        <div style="font-size: 10px; color: var(--green); border: 1px solid var(--green); padding: 3px 8px; border-radius: 10px;">● CANLI VERİ</div>
     </div>
 
-    <input type="text" id="searchInput" class="search-box" placeholder="Hisse veya Şirket Ara..." onkeyup="filterHisseler()">
+    <input type="text" id="ara" class="search-box" placeholder="Hisse veya Şirket Ara..." onkeyup="filterHisseler()">
 
-    <div class="hisse-list" id="hisseList"></div>
+    <div class="hisse-list" id="list"></div>
 
     <div id="analizModal">
-        <div class="nav-bar">
-            <span id="targetSymbol" style="font-weight:900; font-size:20px; color:var(--green);">ANALİZ</span>
+        <div class="nav">
+            <span id="title" style="font-weight:bold; color:var(--green);">ANALİZ</span>
             <button class="back-btn" onclick="closeModal()">GERİ DÖN</button>
         </div>
-        <div id="chartContainer" class="chart-frame"></div>
+        <div id="chart" style="height: calc(100% - 60px);"></div>
     </div>
 
     <script>
-        // BIST 100 - En Popüler Hisseler (Kanka buraya istediğin kadar ekle)
-        const hisseler = [
-            {s:"THYAO", n:"Türk Hava Yolları"}, {s:"ASELS", n:"Aselsan"}, {s:"TUPRS", n:"Tüpraş"},
-            {s:"SASA", n:"Sasa Polyester"}, {s:"EREGL", n:"Ereğli Demir Çelik"}, {s:"ASTOR", n:"Astor Enerji"},
-            {s:"KCHOL", n:"Koç Holding"}, {s:"SAHOL", n:"Sabancı Holding"}, {s:"BIMAS", n:"Bim Mağazalar"},
-            {s:"SISE", n:"Şişecam"}, {s:"EKGYO", n:"Emlak Konut"}, {s:"KONTR", n:"Kontrolmatik"},
-            {s:"YEOTK", n:"Yeo Teknoloji"}, {s:"EUPWR", n:"Europower Enerji"}, {s:"MIATK", n:"Mia Teknoloji"},
-            {s:"REEDR", n:"Reeder Teknoloji"}, {s:"CANTE", n:"Çan2 Termik"}, {s:"DOAS", n:"Doğuş Otomotiv"},
-            {s:"FROTO", n:"Ford Otosan"}, {s:"TOASO", n:"Tofaş"}, {s:"PGSUS", n:"Pegasus"},
-            {s:"HEKTS", n:"Hektaş"}, {s:"PETKM", n:"Petkim"}, {s:"ODAS", n:"Odaş Elektrik"},
-            {s:"LXGYO", n:"Luxera GMYO"}, {s:"ALARK", n:"Alarko Holding"}, {s:"GUBRF", n:"Gübre Fabrikaları"}
-        ];
+        const hisseler = ["THYAO", "ASELS", "TUPRS", "SASA", "EREGL", "ASTOR", "KCHOL", "SAHOL", "BIMAS", "SISE"];
 
-        function renderList(data) {
-            const container = document.getElementById('hisseList');
+        function init() {
+            const container = document.getElementById('list');
             container.innerHTML = "";
-            data.forEach(h => {
+            hisseler.forEach(s => {
                 container.innerHTML += `
-                    <div class="hisse-card" onclick="openAnaliz('${h.s}')">
-                        <div class="info-left">
-                            <div class="symbol-icon">${h.s.substring(0,2)}</div>
-                            <div>
-                                <div class="symbol-name">${h.s}</div>
-                                <div class="full-name">${h.n}</div>
-                            </div>
+                    <div class="hisse-card" onclick="openAnaliz('${s}')">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <div style="width:40px; height:40px; background:#1a1a1a; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:bold; color:#555; border:1px solid #333;">${s.substring(0,2)}</div>
+                            <b>${s}</b>
                         </div>
-                        <div class="price-right">
-                            <div class="view-btn">ANALİZ ET</div>
+                        <div class="price-info">
+                            <iframe src="https://s.tradingview.com/embed-widget/single-quote/?symbol=BIST%3A${s}&theme=dark&locale=tr" style="width:100%; height:100%; border:none; pointer-events:none;"></iframe>
                         </div>
                     </div>`;
             });
         }
 
-        function filterHisseler() {
-            const term = document.getElementById('searchInput').value.toUpperCase();
-            const filtered = hisseler.filter(h => h.s.includes(term) || h.n.toUpperCase().includes(term));
-            renderList(filtered);
-        }
-
-        function openAnaliz(symbol) {
+        function openAnaliz(s) {
             document.getElementById('analizModal').style.display = 'block';
-            document.getElementById('targetSymbol').innerText = symbol + " / BIST";
-            // Kanka burada TradingView'ın 'Gömülebilir' ve 'Engellenemeyen' widget'ını kullanıyoruz.
-            document.getElementById('chartContainer').innerHTML = `
-                <iframe src="https://s.tradingview.com/embed-widget/mini-symbol-overview/?symbol=BIST%3A${symbol}&theme=dark&width=100%&height=100%&trendLineColor=%2300ff88&underLineColor=rgba(0%2C255%2C136%2C0.1)&locale=tr" 
-                style="width:100%; height:100%; border:none;"></iframe>
+            document.getElementById('title').innerText = s + " / BIST";
+            // Teknik analiz için en sağlam ve hızlı widget
+            document.getElementById('chart').innerHTML = `
+                <iframe src="https://s.tradingview.com/embed-widget/technical-analysis/?symbol=BIST%3A${s}&theme=dark&locale=tr&interval=1D&width=100%&height=100%" style="width:100%; height:100%; border:none;"></iframe>
             `;
         }
 
         function closeModal() {
             document.getElementById('analizModal').style.display = 'none';
-            document.getElementById('chartContainer').innerHTML = "";
+            document.getElementById('chart').innerHTML = "";
         }
 
-        renderList(hisseler);
+        init();
     </script>
 </body>
 </html>
