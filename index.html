@@ -9,21 +9,20 @@
         :root { --bg: #000; --card: #080808; --green: #00ff88; --red: #ff3e3e; --gray: #888; --border: #151515; }
         body { background: var(--bg); color: white; font-family: -apple-system, sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
         
-        /* Üst Header */
-        .header { padding: 15px; border-bottom: 1px solid var(--border); }
-        .search-bar { width: 100%; background: #111; border: 1px solid var(--border); padding: 12px; border-radius: 8px; color: white; outline: none; margin-bottom: 10px; }
-        .welcome { font-size: 14px; font-weight: bold; margin-bottom: 10px; }
+        .header { padding: 15px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); z-index: 50; }
+        .search-bar { width: 100%; background: #111; border: 1px solid var(--border); padding: 12px; border-radius: 8px; color: white; outline: none; margin-bottom: 10px; font-size: 15px; transition: 0.2s; }
+        .search-bar:focus { border-color: var(--green); }
+        .welcome { font-size: 13px; font-weight: bold; margin-bottom: 5px; color: var(--gray); }
 
-        /* Kategori Butonları */
         .tabs { display: flex; gap: 10px; padding: 0 15px 15px; overflow-x: auto; }
-        .tab-btn { background: rgba(0, 255, 136, 0.1); color: var(--green); border: 1px solid rgba(0, 255, 136, 0.2); padding: 6px 15px; border-radius: 20px; font-size: 12px; white-space: nowrap; }
+        .tab-btn { background: rgba(0, 255, 136, 0.1); color: var(--green); border: 1px solid rgba(0, 255, 136, 0.2); padding: 6px 15px; border-radius: 20px; font-size: 12px; white-space: nowrap; cursor: pointer; }
 
-        /* Hisse Listesi */
-        .hisse-list { display: flex; flex-direction: column; }
-        .hisse-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid var(--border); }
+        .hisse-list { display: flex; flex-direction: column; padding-bottom: 90px; }
+        .hisse-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; }
+        .hisse-row:active { background: #151515; }
         
         .left { display: flex; align-items: center; gap: 12px; }
-        .logo { width: 36px; height: 36px; border-radius: 8px; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .logo { width: 38px; height: 38px; border-radius: 8px; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .logo img { width: 85%; height: 85%; object-fit: contain; }
         
         .name-box { display: flex; flex-direction: column; }
@@ -36,35 +35,52 @@
         .up { color: var(--green); }
         .down { color: var(--red); }
 
-        /* Alt Navigasyon (Fotoğraftaki Bar) */
-        .nav-bar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(15,15,15,0.9); border: 1px solid var(--border); border-radius: 20px; display: flex; padding: 10px 20px; gap: 25px; backdrop-filter: blur(10px); }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--gray); font-size: 10px; }
-        .nav-item.active { color: white; }
+        .nav-bar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(15,15,15,0.95); border: 1px solid var(--border); border-radius: 20px; display: flex; padding: 10px 20px; gap: 25px; backdrop-filter: blur(10px); z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--gray); font-size: 10px; cursor: pointer; transition: 0.2s; }
+        .nav-item.active { color: white; transform: translateY(-2px); }
         .nav-icon { font-size: 18px; }
+
+        /* Analiz Modal Ekranı */
+        #analiz-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 9999; flex-direction: column; }
+        .modal-header { padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .close-btn { background: #222; color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        #iframe-container { flex: 1; width: 100%; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <input type="text" class="search-bar" placeholder="🔍 Hisse ara...">
-    <div class="welcome">İyi hafta sonları Yatırımcı! 🚀</div>
+<div id="ana-ekran">
+    <div class="header">
+        <input type="text" id="arama" class="search-bar" placeholder="🔍 Hisse ara (Örn: THYAO, ASTOR)..." oninput="filtrele()">
+        <div class="welcome">İyi hafta sonları Yatırımcı! 🚀</div>
+    </div>
+
+    <div class="tabs">
+        <div class="tab-btn">Favoriler 20</div>
+        <div class="tab-btn" style="background:#111; color:#fff; border:1px solid #222;">BIST 30</div>
+    </div>
+
+    <div class="hisse-list" id="liste"></div>
+
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="navDegis(this)"><span class="nav-icon">🏠</span><span>Anasayfa</span></div>
+        <div class="nav-item" onclick="navDegis(this)"><span class="nav-icon">🏢</span><span>Kurumsal</span></div>
+        <div class="nav-item" onclick="navDegis(this)"><span class="nav-icon">📋</span><span>Bülten</span></div>
+        <div class="nav-item" onclick="navDegis(this)"><span class="nav-icon">💰</span><span>Fon</span></div>
+    </div>
 </div>
 
-<div class="tabs">
-    <div class="tab-btn">Favoriler 20</div>
-    <div class="tab-btn" style="background:#111; color:#fff; border:1px solid #222;">+</div>
-</div>
-
-<div class="hisse-list" id="liste"></div>
-
-<div class="nav-bar">
-    <div class="nav-item active"><span class="nav-icon">🏠</span><span>Anasayfa</span></div>
-    <div class="nav-item"><span class="nav-icon">🏢</span><span>Kurumsal</span></div>
-    <div class="nav-item"><span class="nav-icon">📋</span><span>Bülten</span></div>
-    <div class="nav-item"><span class="nav-icon">💰</span><span>Fon</span></div>
+<div id="analiz-modal">
+    <div class="modal-header">
+        <span id="modal-baslik" style="font-weight:bold; color:var(--green);">ANALİZ</span>
+        <button class="close-btn" onclick="kapatAnaliz()">Geri Dön</button>
+    </div>
+    <div id="iframe-container"></div>
 </div>
 
 <script>
+    const tg = window.Telegram.WebApp; tg.expand(); tg.ready();
+
     const hisseler = [
         {s: "LXGYO", n: "LUXERA GMYO", f: "17,40", d: "9.99", c: "up", i: "luxera-gayrimenkul"},
         {s: "THYAO", n: "TURK HAVA YOLLARI", f: "296,00", d: "1.25", c: "up", i: "turkish-airlines"},
@@ -75,27 +91,73 @@
         {s: "TUPRS", n: "TUPRAS", f: "255,25", d: "0.29", c: "up", i: "tupras"},
         {s: "BIMAS", n: "BIM MAGAZALAR", f: "691,00", d: "1.78", c: "up", i: "bim-birlesik-magazalar"},
         {s: "KCHOL", n: "KOC HOLDING", f: "191,30", d: "0.93", c: "up", i: "koc-holding"},
-        {s: "ISCTR", n: "IS BANKASI (C)", f: "13,15", d: "0.23", c: "down", i: "isbank"}
+        {s: "ISCTR", n: "IS BANKASI (C)", f: "13,15", d: "0.23", c: "down", i: "isbank"},
+        {s: "SASA", n: "SASA POLYESTER", f: "38,40", d: "0.45", c: "down", i: "sasa-polyester"},
+        {s: "EREGL", n: "EREGLI DEMIR CELIK", f: "45,12", d: "0.14", c: "up", i: "eregli-demir-celik"},
+        {s: "SISE", n: "SISECAM", f: "52,40", d: "1.10", c: "down", i: "sise-cam"},
+        {s: "AKBNK", n: "AKBANK", f: "42,15", d: "1.50", c: "up", i: "akbank"}
     ];
 
-    const listDiv = document.getElementById('liste');
-    hisseler.forEach(h => {
-        const logoUrl = `https://s3-symbol-logo.tradingview.com/${h.i}--big.svg`;
-        listDiv.innerHTML += `
-            <div class="hisse-row">
-                <div class="left">
-                    <div class="logo"><img src="${logoUrl}" onerror="this.src='https://ui-avatars.com/api/?name=${h.s}&background=111&color=fff'"></div>
-                    <div class="name-box">
-                        <span class="symbol">${h.s}</span>
-                        <span class="full-name">${h.n}</span>
+    // Listeyi Ekrana Basma Fonksiyonu
+    function listeyiCiz(filtreKelimesi = "") {
+        const listDiv = document.getElementById('liste');
+        listDiv.innerHTML = ""; // Önce temizle
+        
+        // Arama kutusuna yazılana göre filtrele (hem kodda hem isimde arar)
+        const filtrelenmis = hisseler.filter(h => 
+            h.s.includes(filtreKelimesi.toUpperCase()) || 
+            h.n.includes(filtreKelimesi.toUpperCase())
+        );
+
+        filtrelenmis.forEach(h => {
+            const logoUrl = `https://s3-symbol-logo.tradingview.com/${h.i}--big.svg`;
+            listDiv.innerHTML += `
+                <div class="hisse-row" onclick="analizAc('${h.s}')">
+                    <div class="left">
+                        <div class="logo"><img src="${logoUrl}" onerror="this.src='https://ui-avatars.com/api/?name=${h.s}&background=111&color=fff'"></div>
+                        <div class="name-box">
+                            <span class="symbol">${h.s}</span>
+                            <span class="full-name">${h.n}</span>
+                        </div>
                     </div>
-                </div>
-                <div class="right">
-                    <div class="price">${h.f} ₺</div>
-                    <div class="change ${h.c}">%${h.d}</div>
-                </div>
-            </div>`;
-    });
+                    <div class="right">
+                        <div class="price">${h.f} ₺</div>
+                        <div class="change ${h.c}">%${h.d}</div>
+                    </div>
+                </div>`;
+        });
+    }
+
+    // Arama Kutusuna Yazdıkça Çalışır
+    function filtrele() {
+        const aranan = document.getElementById('arama').value;
+        listeyiCiz(aranan);
+    }
+
+    // Hisseye Tıklayınca Grafiği Açar
+    function analizAc(sembol) {
+        document.getElementById('ana-ekran').style.display = 'none';
+        document.getElementById('analiz-modal').style.display = 'flex';
+        document.getElementById('modal-baslik').innerText = sembol + " DETAYI";
+        const url = `https://s.tradingview.com/widgetembed/?symbol=BIST:${sembol}&interval=D&theme=dark&style=1&locale=tr`;
+        document.getElementById('iframe-container').innerHTML = `<iframe src="${url}" style="width:100%;height:100%;border:none;"></iframe>`;
+    }
+
+    // Grafiği Kapatır
+    function kapatAnaliz() {
+        document.getElementById('analiz-modal').style.display = 'none';
+        document.getElementById('ana-ekran').style.display = 'block';
+        document.getElementById('iframe-container').innerHTML = ""; // İframe'i temizle ki arka planda kasmasın
+    }
+
+    // Alt Bar Animasyonu
+    function navDegis(secilen) {
+        document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+        secilen.classList.add('active');
+    }
+
+    // İlk Açılışta Listeyi Yükle
+    listeyiCiz();
 </script>
 </body>
 </html>
