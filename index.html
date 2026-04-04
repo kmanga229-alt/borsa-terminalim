@@ -3,51 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BIST PRO Terminal</title>
+    <title>BIST ULTIMATE Terminal</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --bg: #000; --card: #080808; --green: #00ff88; --red: #ff3e3e; --gray: #888; --border: #1a1a1a; }
+        :root { --bg: #000; --card: #080808; --green: #00ff88; --red: #ff3e3e; --gray: #888; --border: #1a1a1a; --yellow: #ffcc00; }
         body { background: var(--bg); color: white; font-family: -apple-system, sans-serif; margin: 0; padding: 0; overflow: hidden; height: 100vh; }
         
-        /* Sayfa Yapısı */
         .page { display: none; height: 100vh; flex-direction: column; }
         .page.active { display: flex; }
 
-        /* Header & Arama */
         .header { padding: 15px; border-bottom: 1px solid var(--border); background: var(--bg); }
-        .search-container { position: relative; width: 100%; }
+        .search-container { position: relative; width: 100%; margin-bottom: 15px; }
         .search-bar { width: 100%; background: #121212; border: 1px solid var(--border); padding: 12px 12px 12px 35px; border-radius: 10px; color: white; outline: none; box-sizing: border-box; font-size: 15px; }
         .search-bar:focus { border-color: var(--green); }
         .search-icon { position: absolute; left: 12px; top: 13px; color: var(--gray); }
 
-        /* Hisse Listesi */
-        .content { flex: 1; overflow-y: auto; padding-bottom: 80px; }
-        .hisse-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid var(--border); transition: 0.2s; }
-        .hisse-row:active { background: #111; }
+        .tabs { display: flex; gap: 10px; padding: 0 0 5px; overflow-x: auto; }
+        .tab-btn { background: #111; color: var(--gray); border: 1px solid var(--border); padding: 8px 18px; border-radius: 20px; font-size: 12px; white-space: nowrap; cursor: pointer; font-weight: bold; }
+        .tab-btn.active { background: rgba(0, 255, 136, 0.1); color: var(--green); border-color: var(--green); }
+
+        .content { flex: 1; overflow-y: auto; padding-bottom: 90px; }
+        .hisse-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid var(--border); }
         
-        .left { display: flex; align-items: center; gap: 12px; }
-        .logo { width: 38px; height: 38px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid #222; }
+        .left { display: flex; align-items: center; gap: 10px; flex: 1; }
+        .fav-star { font-size: 20px; color: #222; cursor: pointer; transition: 0.2s; padding: 5px; }
+        .fav-star.active { color: var(--yellow); }
+        
+        .logo { width: 34px; height: 34px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid #222; flex-shrink: 0; }
         .logo img { width: 85%; height: 85%; object-fit: contain; }
         
-        .symbol-info { display: flex; flex-direction: column; }
-        .symbol { font-weight: 800; font-size: 16px; }
-        .name { font-size: 10px; color: var(--gray); text-transform: uppercase; }
+        .symbol-info { display: flex; flex-direction: column; cursor: pointer; flex: 1; }
+        .symbol { font-weight: 800; font-size: 15px; }
+        .name { font-size: 9px; color: var(--gray); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
 
-        .right { text-align: right; }
-        .price { font-weight: 800; font-size: 16px; margin-bottom: 4px; }
-        .change { font-size: 11px; font-weight: bold; padding: 2px 6px; border-radius: 4px; }
-        .up { color: var(--green); background: rgba(0,255,136,0.1); }
-        .down { color: var(--red); background: rgba(255,62,62,0.1); }
+        .right { text-align: right; cursor: pointer; }
+        .price { font-weight: 800; font-size: 15px; margin-bottom: 2px; }
+        .change { font-size: 11px; font-weight: bold; border-radius: 4px; }
+        .up { color: var(--green); }
+        .down { color: var(--red); }
 
-        /* Alt Navigasyon */
-        .nav-bar { position: fixed; bottom: 15px; left: 15px; right: 15px; background: rgba(15,15,15,0.95); border: 1px solid var(--border); border-radius: 20px; display: flex; justify-content: space-around; padding: 10px; backdrop-filter: blur(15px); }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--gray); font-size: 10px; cursor: pointer; flex: 1; }
+        .nav-bar { position: fixed; bottom: 15px; left: 15px; right: 15px; background: rgba(10,10,10,0.9); border: 1px solid var(--border); border-radius: 20px; display: flex; justify-content: space-around; padding: 10px; backdrop-filter: blur(15px); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--gray); font-size: 10px; cursor: pointer; }
         .nav-item.active { color: var(--green); }
-        .nav-icon { font-size: 20px; }
+        .nav-icon { font-size: 18px; }
 
-        /* Grafik Ekranı */
         #chart-frame { width: 100%; height: 100%; border: none; }
-        .back-btn { background: #222; border: none; color: white; padding: 8px 15px; border-radius: 8px; font-weight: bold; margin-bottom: 10px; }
+        .back-btn { background: #111; border: 1px solid #333; color: white; padding: 8px 15px; border-radius: 8px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -56,45 +57,35 @@
         <div class="header">
             <div class="search-container">
                 <span class="search-icon">🔍</span>
-                <input type="text" id="searchInput" class="search-bar" placeholder="Hisse veya şirket ara..." oninput="handleSearch()">
+                <input type="text" id="searchInput" class="search-bar" placeholder="Hisse veya şirket ara..." oninput="handleUI()">
             </div>
-            <div style="margin-top:15px; font-size:12px; color:var(--gray); font-weight:bold;">FAVORİLER (BIST 30)</div>
+            <div class="tabs">
+                <div id="tab-all" class="tab-btn active" onclick="setMode('all')">HEPSİ</div>
+                <div id="tab-fav" class="tab-btn" onclick="setMode('fav')">⭐ FAVORİLERİM</div>
+            </div>
         </div>
-        <div class="content" id="stockList">
-            </div>
+        <div class="content" id="stockList"></div>
     </div>
 
     <div id="analiz-page" class="page">
         <div class="header" style="display:flex; justify-content:space-between; align-items:center;">
             <button class="back-btn" onclick="showPage('home-page')">← Geri</button>
-            <span id="selectedSymbol" style="font-weight:bold; color:var(--green);">DETAY</span>
+            <span id="selectedSymbol" style="font-weight:bold; color:var(--green);">ANALİZ</span>
         </div>
         <div id="chartContainer" style="flex:1;"></div>
     </div>
 
-    <div id="news-page" class="page">
-        <div class="header">📋 Günlük Bülten</div>
-        <div class="content" style="padding:20px; color:var(--gray); text-align:center;">
-            <p>Bugün piyasalar yatay seyrediyor.<br>SASA ve HEKTS takibimizde.</p>
-        </div>
-    </div>
-
     <div class="nav-bar">
-        <div class="nav-item active" onclick="showPage('home-page', this)">
-            <span class="nav-icon">🏠</span><span>Piyasa</span>
-        </div>
-        <div class="nav-item" onclick="showPage('news-page', this)">
-            <span class="nav-icon">📋</span><span>Bülten</span>
-        </div>
-        <div class="nav-item" onclick="tg.close()">
-            <span class="nav-icon">🚪</span><span>Çıkış</span>
-        </div>
+        <div class="nav-item active" onclick="showPage('home-page', this)"><span class="nav-icon">🏠</span><span>Piyasa</span></div>
+        <div class="nav-item" onclick="tg.close()"><span class="nav-icon">🚪</span><span>Çıkış</span></div>
     </div>
 
 <script>
     const tg = window.Telegram.WebApp; tg.expand();
+    let mode = 'all'; // 'all' veya 'fav'
+    let favorites = JSON.parse(localStorage.getItem('bist_favs')) || [];
 
-    // Hisse Datası (Buraya istediğin kadar ekle kanka)
+    // 🚀 GENİŞ LİSTE (BIST 30 + Popülerler)
     const stocks = [
         {s: "THYAO", n: "Türk Hava Yolları", f: "296,00", d: "+1.25", c: "up", i: "turkish-airlines"},
         {s: "ASELS", n: "Aselsan", f: "330,50", d: "-1.78", c: "down", i: "aselsan"},
@@ -106,34 +97,71 @@
         {s: "LXGYO", n: "Luxera GMYO", f: "17,40", d: "+9.99", c: "up", i: "luxera-gayrimenkul"},
         {s: "BIMAS", n: "Bim Mağazalar", f: "691,00", d: "+1.78", c: "up", i: "bim-birlesik-magazalar"},
         {s: "KCHOL", n: "Koç Holding", f: "191,30", d: "+0.93", c: "up", i: "koc-holding"},
+        {s: "SAHOL", n: "Sabancı Holding", f: "89,00", d: "-1.22", c: "down", i: "sabanci-holding"},
+        {s: "AKBNK", n: "Akbank", f: "42,15", d: "+1.50", c: "up", i: "akbank"},
+        {s: "GARAN", n: "Garanti BBVA", f: "65,80", d: "+0.45", c: "up", i: "garanti-bankasi"},
+        {s: "ISCTR", n: "İş Bankası (C)", f: "13,15", d: "-0.23", c: "down", i: "isbank"},
+        {s: "SISE", n: "Şişecam", f: "52,40", d: "-1.10", c: "down", i: "sise-cam"},
+        {s: "PETKM", n: "Petkim", f: "24,12", d: "+0.85", c: "up", i: "petkim"},
+        {s: "HEKTS", n: "Hektaş", f: "18,20", d: "-2.15", c: "down", i: "hektas"},
+        {s: "KONTR", n: "Kontrolmatik", f: "245,10", d: "-0.85", c: "down", i: "kontrolmatik"},
+        {s: "YEOTK", n: "Yeo Teknoloji", f: "215,40", d: "+4.12", c: "up", i: "yeo-teknoloji"},
+        {s: "REEDR", n: "Reeder Teknoloji", f: "55,20", d: "+9.98", c: "up", i: "reeder-teknoloji"},
+        {s: "PGSUS", n: "Pegasus", f: "840,00", d: "+3.20", c: "up", i: "pegasus"},
+        {s: "FROTO", n: "Ford Otosan", f: "980,50", d: "+1.12", c: "up", i: "ford-otosan"},
+        {s: "EGEEN", n: "Ege Endüstri", f: "14500", d: "+0.45", c: "up", i: "ege-endustri"},
         {s: "GENKM", n: "Gentaş Kimya", f: "14,69", d: "+9.96", c: "up", i: "gentas"}
     ];
 
-    function renderList(filter = "") {
+    function toggleFavorite(symbol, event) {
+        event.stopPropagation();
+        if (favorites.includes(symbol)) {
+            favorites = favorites.filter(s => s !== symbol);
+        } else {
+            favorites.push(symbol);
+        }
+        localStorage.setItem('bist_favs', JSON.stringify(favorites));
+        handleUI();
+    }
+
+    function setMode(newMode) {
+        mode = newMode;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(`tab-${mode}`).classList.add('active');
+        handleUI();
+    }
+
+    function handleUI() {
+        const filter = document.getElementById('searchInput').value.toLowerCase();
         const listContainer = document.getElementById('stockList');
         listContainer.innerHTML = "";
         
-        const filtered = stocks.filter(item => 
-            item.s.toLowerCase().includes(filter.toLowerCase()) || 
-            item.n.toLowerCase().includes(filter.toLowerCase())
+        let filtered = stocks.filter(item => 
+            item.s.toLowerCase().includes(filter) || 
+            item.n.toLowerCase().includes(filter)
         );
 
+        if (mode === 'fav') {
+            filtered = filtered.filter(item => favorites.includes(item.s));
+        }
+
         filtered.forEach(item => {
+            const isFav = favorites.includes(item.s);
             const row = document.createElement('div');
             row.className = 'hisse-row';
-            row.onclick = () => openAnaliz(item.s);
             
             const logoUrl = `https://s3-symbol-logo.tradingview.com/${item.i}--big.svg`;
             
             row.innerHTML = `
                 <div class="left">
+                    <span class="fav-star ${isFav ? 'active' : ''}" onclick="toggleFavorite('${item.s}', event)">★</span>
                     <div class="logo"><img src="${logoUrl}" onerror="this.src='https://ui-avatars.com/api/?name=${item.s}&background=111&color=fff'"></div>
-                    <div class="symbol-info">
+                    <div class="symbol-info" onclick="openAnaliz('${item.s}')">
                         <span class="symbol">${item.s}</span>
                         <span class="name">${item.n}</span>
                     </div>
                 </div>
-                <div class="right">
+                <div class="right" onclick="openAnaliz('${item.s}')">
                     <div class="price">${item.f} ₺</div>
                     <span class="change ${item.c}">${item.d}%</span>
                 </div>`;
@@ -141,19 +169,9 @@
         });
     }
 
-    function handleSearch() {
-        const val = document.getElementById('searchInput').value;
-        renderList(val);
-    }
-
-    function showPage(pageId, navEl) {
+    function showPage(pageId) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById(pageId).classList.add('active');
-        
-        if(navEl) {
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            navEl.classList.add('active');
-        }
     }
 
     function openAnaliz(symbol) {
@@ -163,8 +181,7 @@
         container.innerHTML = `<iframe id="chart-frame" src="https://s.tradingview.com/widgetembed/?symbol=BIST:${symbol}&interval=D&theme=dark&style=1&locale=tr"></iframe>`;
     }
 
-    // İlk yükleme
-    renderList();
+    handleUI();
 </script>
 </body>
 </html>
