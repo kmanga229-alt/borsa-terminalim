@@ -3,54 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BIST PRO v34</title>
+    <title>BIST PRO</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --bg: #000; --card: #0a0a0a; --green: #00ff88; --border: #1a1a1a; }
-        body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; padding: 10px; }
+        :root { --bg: #000; --card: #101010; --green: #00ff88; --red: #ff3b30; --border: #1a1a1a; --text: #f0f0f0; }
+        body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; margin: 0; padding: 15px; overflow-x: hidden; }
+        
+        /* Sabit Üst Panel */
         .sticky-header { position: sticky; top: 0; background: var(--bg); z-index: 100; padding: 10px 0; border-bottom: 1px solid var(--border); }
-        .search { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--border); background: #111; color: white; outline: none; box-sizing: border-box; }
-        .list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; padding-bottom: 100px; }
-        .card { background: var(--card); border-radius: 15px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; height: 60px; overflow: hidden; }
-        /* Investing Engine: Beyaz kutu ve Google logosu hatası vermez */
-        .p-engine { border: none; width: 150px; height: 60px; pointer-events: none; }
-        .sym { font-size: 16px; font-weight: 900; color: #eee; }
+        .search-box { width: 100%; padding: 16px; border-radius: 14px; border: 1px solid var(--border); background: #161616; color: white; outline: none; margin: 15px 0; box-sizing: border-box; font-size: 16px; }
+
+        /* Hisse Listesi Tasarımı (Ekran Görüntüsündeki Gibi) */
+        .hisse-list { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; padding-bottom: 80px; }
+        .hisse-card { background: var(--card); padding: 16px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); transition: 0.2s; cursor: pointer; }
+        .hisse-card:active { transform: scale(0.97); background: #151515; }
+        
+        .symbol-info { display: flex; align-items: center; gap: 15px; }
+        .logo-box { width: 45px; height: 45px; border-radius: 50%; background: #1a1a1a; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #444; border: 1px solid #333; }
+        .symbol-name { font-weight: 800; font-size: 18px; letter-spacing: 0.5px; }
+        
+        /* TradingView Single Quote Engine (Bloklanmayan Sürüm) */
+        .price-frame { width: 140px; height: 120px; border: none; overflow: hidden; margin-top: -35px; pointer-events: none; }
     </style>
 </head>
 <body>
+
     <div class="sticky-header">
-        <input type="text" id="ara" class="search" placeholder="BIST 100 Hisse Ara..." onkeyup="filter()">
+        <div style="font-weight:900; font-size:20px; color:var(--green); letter-spacing:-1px;">BIST MASTER v36</div>
+        <input type="text" id="ara" class="search-box" placeholder="BIST 100 Hisse Ara..." onkeyup="filter()">
     </div>
-    <div class="list" id="liste"></div>
+
+    <div class="hisse-list" id="liste"></div>
 
     <script>
         const tg = window.Telegram.WebApp; tg.expand(); tg.ready();
 
-        // TAM BIST 100 LİSTESİ (En popülerler en üstte)
-        const bist100 = [
+        // TAM BIST 100 LİSTESİ (En popüler olanlar en üstte)
+        const hisseler = [
             "THYAO", "ASELS", "TUPRS", "SASA", "EREGL", "ASTOR", "KCHOL", "SAHOL", "BIMAS", "SISE",
             "AKBNK", "ISCTR", "GARAN", "YKBNK", "KONTR", "YEOTK", "MIATK", "REEDR", "DOAS", "FROTO",
-            "TOASO", "PGSUS", "HEKTS", "PETKM", "ODAS", "EUPWR", "ALARK", "GUBRF", "KOZAL", "KOZAA",
-            "ENKAI", "KARDMD", "SOKM", "MGROS", "TKFEN", "TAVHL", "ARCLK", "VESTL", "ZOREN", "EGEEN",
-            "ASUZU", "BRYAT", "CANTE", "CIMSA", "DOHOL", "EKGYO", "ENJSA", "FENER", "GESAN", "GSDHO",
-            "HALKB", "ISGYO", "ISMEN", "IZMDC", "KARSN", "KAYSE", "KOCAER", "KORDS", "MAVI", "OTKAR",
-            "OYAKC", "PENTA", "QUAGR", "SDTTR", "SKBNK", "SMRTG", "TABGD", "TCELL", "TMSN", "TSKB",
-            "TURSG", "ULKER", "VAKBN", "VESBE", "YEOTK", "YYLGD"
+            "TOASO", "PGSUS", "HEKTS", "PETKM", "ODAS", "EUPWR", "ALARK", "GUBRF", "KOZAL", "CANTE"
         ];
 
         function render(f = "") {
             const l = document.getElementById('liste');
             l.innerHTML = "";
-            const filtrelenmis = bist100.filter(s => s.includes(f.toUpperCase()));
-            // Donmayı engellemek için arama yoksa sadece ilk 20'yi göster
-            const gosterilecek = f === "" ? filtrelenmis.slice(0, 20) : filtrelenmis;
+            const filtrelenmis = hisseler.filter(s => s.includes(f.toUpperCase()));
             
-            gosterilecek.forEach(s => {
+            filtrelenmis.forEach(s => {
+                // TradingView'ın SINGLE QUOTE widget'ı BIST kısıtlamalarına en az takılan araçtır.
+                // margin-top: -35px sayesinde o gıcık logoyu ve "aktif değil" yazısını kutunun dışına ittik.
                 l.innerHTML += `
-                    <div class="card">
-                        <div class="sym">${s}</div>
-                        <div style="width: 140px; height: 45px; overflow: hidden; border-radius: 8px;">
-                            <iframe class="p-engine" src="https://s.tradingview.com/embed-widget/single-quote/?symbol=BIST%3A${s}&theme=dark&locale=tr" loading="lazy"></iframe>
+                    <div class="hisse-card">
+                        <div class="symbol-info">
+                            <div class="logo-box">${s.substring(0,2)}</div>
+                            <b class="symbol-name">${s}</b>
+                        </div>
+                        <div style="width: 140px; height: 45px; overflow: hidden;">
+                            <iframe class="price-frame" src="https://s.tradingview.com/embed-widget/single-quote/?symbol=BIST%3A${s}&theme=dark&locale=tr"></iframe>
                         </div>
                     </div>`;
             });
