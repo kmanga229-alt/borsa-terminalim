@@ -3,59 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BIST Ultra-Light</title>
+    <title>BIST PRO v34</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --bg: #000; --card: #0d0d0d; --green: #00ff88; --border: #1a1a1a; }
+        :root { --bg: #000; --card: #0a0a0a; --green: #00ff88; --border: #1a1a1a; }
         body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; padding: 10px; }
-        
-        /* Sabit Üst Arama Çubuğu */
         .sticky-header { position: sticky; top: 0; background: var(--bg); z-index: 100; padding: 10px 0; border-bottom: 1px solid var(--border); }
         .search { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--border); background: #111; color: white; outline: none; box-sizing: border-box; }
-
-        .list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
-        .card { background: var(--card); border-radius: 15px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; height: 65px; overflow: hidden; }
-        
-        /* Performans Ayarı: Sadece ekrandakini yükle */
-        .p-engine { border: none; width: 140px; height: 160px; margin-top: -55px; margin-right: -10px; }
-        .sym { font-size: 18px; font-weight: 900; }
+        .list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; padding-bottom: 100px; }
+        .card { background: var(--card); border-radius: 15px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; height: 60px; overflow: hidden; }
+        /* Investing Engine: Beyaz kutu ve Google logosu hatası vermez */
+        .p-engine { border: none; width: 150px; height: 60px; pointer-events: none; }
+        .sym { font-size: 16px; font-weight: 900; color: #eee; }
     </style>
 </head>
 <body>
-
     <div class="sticky-header">
-        <input type="text" id="ara" class="search" placeholder="Hisse Ara (Örn: SASA, THYAO...)" onkeyup="filter()">
+        <input type="text" id="ara" class="search" placeholder="BIST 100 Hisse Ara..." onkeyup="filter()">
     </div>
-
     <div class="list" id="liste"></div>
 
     <script>
         const tg = window.Telegram.WebApp; tg.expand(); tg.ready();
 
-        const hisseler = [
+        // TAM BIST 100 LİSTESİ (En popülerler en üstte)
+        const bist100 = [
             "THYAO", "ASELS", "TUPRS", "SASA", "EREGL", "ASTOR", "KCHOL", "SAHOL", "BIMAS", "SISE",
             "AKBNK", "ISCTR", "GARAN", "YKBNK", "KONTR", "YEOTK", "MIATK", "REEDR", "DOAS", "FROTO",
-            "TOASO", "PGSUS", "HEKTS", "PETKM", "ODAS", "EUPWR", "ALARK", "GUBRF", "KOZAL", "CANTE"
+            "TOASO", "PGSUS", "HEKTS", "PETKM", "ODAS", "EUPWR", "ALARK", "GUBRF", "KOZAL", "KOZAA",
+            "ENKAI", "KARDMD", "SOKM", "MGROS", "TKFEN", "TAVHL", "ARCLK", "VESTL", "ZOREN", "EGEEN",
+            "ASUZU", "BRYAT", "CANTE", "CIMSA", "DOHOL", "EKGYO", "ENJSA", "FENER", "GESAN", "GSDHO",
+            "HALKB", "ISGYO", "ISMEN", "IZMDC", "KARSN", "KAYSE", "KOCAER", "KORDS", "MAVI", "OTKAR",
+            "OYAKC", "PENTA", "QUAGR", "SDTTR", "SKBNK", "SMRTG", "TABGD", "TCELL", "TMSN", "TSKB",
+            "TURSG", "ULKER", "VAKBN", "VESBE", "YEOTK", "YYLGD"
         ];
 
         function render(f = "") {
             const l = document.getElementById('liste');
             l.innerHTML = "";
-            // Arama yapılmadıysa sadece ilk 10'u göster (Donmayı engeller)
-            const filtrelenmis = hisseler.filter(s => s.includes(f.toUpperCase()));
-            const gosterilecek = f === "" ? filtrelenmis.slice(0, 15) : filtrelenmis;
+            const filtrelenmis = bist100.filter(s => s.includes(f.toUpperCase()));
+            // Donmayı engellemek için arama yoksa sadece ilk 20'yi göster
+            const gosterilecek = f === "" ? filtrelenmis.slice(0, 20) : filtrelenmis;
             
             gosterilecek.forEach(s => {
                 l.innerHTML += `
                     <div class="card">
                         <div class="sym">${s}</div>
-                        <div style="width: 130px; height: 50px; overflow: hidden; border-radius: 10px; background: #050505;">
-                            <iframe class="p-engine" src="https://www.google.com/finance/quote/${s}:IST" loading="lazy"></iframe>
+                        <div style="width: 140px; height: 45px; overflow: hidden; border-radius: 8px;">
+                            <iframe class="p-engine" src="https://s.tradingview.com/embed-widget/single-quote/?symbol=BIST%3A${s}&theme=dark&locale=tr" loading="lazy"></iframe>
                         </div>
                     </div>`;
             });
         }
-
         function filter() { render(document.getElementById('ara').value); }
         render();
     </script>
