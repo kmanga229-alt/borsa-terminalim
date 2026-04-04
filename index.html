@@ -3,76 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BIST Master Terminal</title>
+    <title>BIST Veri Terminali</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --bg: #000; --card: #111; --green: #00ff88; --border: #222; }
-        body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; padding: 10px; overflow-x: hidden; }
-        .header { padding: 10px 0; font-size: 20px; font-weight: bold; color: var(--green); margin-bottom: 5px; }
-        .search-box { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--border); background: #1a1a1a; color: white; margin-bottom: 15px; box-sizing: border-box; outline: none; }
+        :root { --bg: #000; --card: #080808; --green: #00ff88; --red: #ff3e3e; --gray: #888; --border: #151515; }
+        body { background: var(--bg); color: white; font-family: -apple-system, sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
         
-        .hisse-list { display: flex; flex-direction: column; gap: 8px; padding-bottom: 50px; }
-        .hisse-row { background: var(--card); padding: 10px 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); height: 60px; }
-        
-        /* LOGO KISMI (Çalışan Logo Kodu) */
-        .logo-alan { display: flex; align-items: center; gap: 12px; flex: 1; }
-        .logo-box { width: 38px; height: 38px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 2px solid #222; }
-        .logo-box img { width: 85%; height: 85%; object-fit: contain; }
-        .symbol { font-weight: 800; font-size: 16px; }
+        /* Üst Header */
+        .header { padding: 15px; border-bottom: 1px solid var(--border); }
+        .search-bar { width: 100%; background: #111; border: 1px solid var(--border); padding: 12px; border-radius: 8px; color: white; outline: none; margin-bottom: 10px; }
+        .welcome { font-size: 14px; font-weight: bold; margin-bottom: 10px; }
 
-        /* FİYAT KISMI (Çalışan Google Fiyat Kodu) */
-        .price-engine { width: 130px; height: 45px; overflow: hidden; border-radius: 8px; position: relative; background: #000; }
-        .price-iframe { border: none; width: 300px; height: 160px; position: absolute; top: -55px; right: -15px; pointer-events: none; }
+        /* Kategori Butonları */
+        .tabs { display: flex; gap: 10px; padding: 0 15px 15px; overflow-x: auto; }
+        .tab-btn { background: rgba(0, 255, 136, 0.1); color: var(--green); border: 1px solid rgba(0, 255, 136, 0.2); padding: 6px 15px; border-radius: 20px; font-size: 12px; white-space: nowrap; }
+
+        /* Hisse Listesi */
+        .hisse-list { display: flex; flex-direction: column; }
+        .hisse-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid var(--border); }
+        
+        .left { display: flex; align-items: center; gap: 12px; }
+        .logo { width: 36px; height: 36px; border-radius: 8px; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .logo img { width: 85%; height: 85%; object-fit: contain; }
+        
+        .name-box { display: flex; flex-direction: column; }
+        .symbol { font-weight: 800; font-size: 15px; }
+        .full-name { font-size: 10px; color: var(--gray); text-transform: uppercase; }
+
+        .right { text-align: right; }
+        .price { font-weight: 800; font-size: 15px; }
+        .change { font-size: 11px; font-weight: bold; }
+        .up { color: var(--green); }
+        .down { color: var(--red); }
+
+        /* Alt Navigasyon (Fotoğraftaki Bar) */
+        .nav-bar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(15,15,15,0.9); border: 1px solid var(--border); border-radius: 20px; display: flex; padding: 10px 20px; gap: 25px; backdrop-filter: blur(10px); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--gray); font-size: 10px; }
+        .nav-item.active { color: white; }
+        .nav-icon { font-size: 18px; }
     </style>
 </head>
 <body>
 
-<div class="header">BIST MASTER v54</div>
-<input type="text" id="ara" class="search-box" placeholder="Hisse ara (THYAO, MIATK...)" onkeyup="ara()">
+<div class="header">
+    <input type="text" class="search-bar" placeholder="🔍 Hisse ara...">
+    <div class="welcome">İyi hafta sonları Yatırımcı! 🚀</div>
+</div>
+
+<div class="tabs">
+    <div class="tab-btn">Favoriler 20</div>
+    <div class="tab-btn" style="background:#111; color:#fff; border:1px solid #222;">+</div>
+</div>
+
 <div class="hisse-list" id="liste"></div>
 
-<script>
-    const tg = window.Telegram.WebApp; tg.expand();
+<div class="nav-bar">
+    <div class="nav-item active"><span class="nav-icon">🏠</span><span>Anasayfa</span></div>
+    <div class="nav-item"><span class="nav-icon">🏢</span><span>Kurumsal</span></div>
+    <div class="nav-item"><span class="nav-icon">📋</span><span>Bülten</span></div>
+    <div class="nav-item"><span class="nav-icon">💰</span><span>Fon</span></div>
+</div>
 
-    // Logo id'leri ve hisse kodları
+<script>
     const hisseler = [
-        {s: "THYAO", tv: "turkish-airlines"}, {s: "ASELS", tv: "aselsan"},
-        {s: "TUPRS", tv: "tupras"}, {s: "BIMAS", tv: "bim-birlesik-magazalar"},
-        {s: "SASA", tv: "sasa-polyester"}, {s: "SAHOL", tv: "sabanci-holding"},
-        {s: "KCHOL", tv: "koc-holding"}, {s: "MIATK", tv: "mia-teknoloji"},
-        {s: "KONTR", tv: "kontrolmatik"}, {s: "EREGL", tv: "eregli-demir-celik"},
-        {s: "ASTOR", tv: "astor-enerji"}, {s: "SISE", tv: "sise-cam"},
-        {s: "AKBNK", tv: "akbank"}, {s: "LXGYO", tv: "luxera-gayrimenkul"},
-        {s: "GENKM", tv: "gentas"}, {s: "REEDR", tv: "reeder-teknoloji"}
+        {s: "LXGYO", n: "LUXERA GMYO", f: "17,40", d: "9.99", c: "up", i: "luxera-gayrimenkul"},
+        {s: "THYAO", n: "TURK HAVA YOLLARI", f: "296,00", d: "1.25", c: "up", i: "turkish-airlines"},
+        {s: "SAHOL", n: "SABANCI HOLDING", f: "89,00", d: "1.22", c: "down", i: "sabanci-holding"},
+        {s: "ASTOR", n: "ASTOR ENERJI", f: "206,50", d: "0.63", c: "up", i: "astor-enerji"},
+        {s: "GENKM", n: "GENTAS KIMYA", f: "14,69", d: "9.96", c: "up", i: "gentas"},
+        {s: "ASELS", n: "ASELSAN", f: "330,50", d: "1.78", c: "down", i: "aselsan"},
+        {s: "TUPRS", n: "TUPRAS", f: "255,25", d: "0.29", c: "up", i: "tupras"},
+        {s: "BIMAS", n: "BIM MAGAZALAR", f: "691,00", d: "1.78", c: "up", i: "bim-birlesik-magazalar"},
+        {s: "KCHOL", n: "KOC HOLDING", f: "191,30", d: "0.93", c: "up", i: "koc-holding"},
+        {s: "ISCTR", n: "IS BANKASI (C)", f: "13,15", d: "0.23", c: "down", i: "isbank"}
     ];
 
-    function render(f = "") {
-        const listDiv = document.getElementById('liste');
-        listDiv.innerHTML = "";
-        const filtered = hisseler.filter(x => x.s.includes(f.toUpperCase()));
-        
-        // Donmayı önlemek için ilk açılışta 15 tane yükler
-        const gosterilecek = f === "" ? filtered.slice(0, 15) : filtered;
-
-        gosterilecek.forEach(h => {
-            const logoUrl = `https://s3-symbol-logo.tradingview.com/${h.tv}--big.svg`;
-            listDiv.innerHTML += `
-                <div class="hisse-row">
-                    <div class="logo-alan">
-                        <div class="logo-box">
-                            <img src="${logoUrl}" onerror="this.src='https://ui-avatars.com/api/?name=${h.s}&background=111&color=fff'">
-                        </div>
-                        <div class="symbol">${h.s}</div>
+    const listDiv = document.getElementById('liste');
+    hisseler.forEach(h => {
+        const logoUrl = `https://s3-symbol-logo.tradingview.com/${h.i}--big.svg`;
+        listDiv.innerHTML += `
+            <div class="hisse-row">
+                <div class="left">
+                    <div class="logo"><img src="${logoUrl}" onerror="this.src='https://ui-avatars.com/api/?name=${h.s}&background=111&color=fff'"></div>
+                    <div class="name-box">
+                        <span class="symbol">${h.s}</span>
+                        <span class="full-name">${h.n}</span>
                     </div>
-                    <div class="price-engine">
-                        <iframe class="price-iframe" src="https://www.google.com/finance/quote/${h.s}:IST" loading="lazy"></iframe>
-                    </div>
-                </div>`;
-        });
-    }
-
-    function ara() { render(document.getElementById('ara').value); }
-    render();
+                </div>
+                <div class="right">
+                    <div class="price">${h.f} ₺</div>
+                    <div class="change ${h.c}">%${h.d}</div>
+                </div>
+            </div>`;
+    });
 </script>
 </body>
 </html>
