@@ -1,33 +1,63 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <title>BIST Master Terminal</title>
     <style>
-        body { background: #000; color: #00ff88; font-family: sans-serif; margin: 0; padding: 15px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-        .btn { background: #0d0d0d; border: 1px solid #1a1a1a; color: #fff; padding: 15px 5px; border-radius: 10px; text-align: center; font-size: 13px; font-weight: bold; cursor: pointer; }
-        .btn:active { background: #00ff88; color: #000; }
-        .search { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #222; background: #111; color: white; margin-bottom: 15px; box-sizing: border-box; }
+        :root { --bg: #000; --card: #0d0d0d; --green: #00ff88; --red: #ff3b30; --border: #1a1a1a; }
+        body { background: var(--bg); color: white; font-family: -apple-system, sans-serif; margin: 0; padding: 10px; overflow-x: hidden; }
+        
+        .header { position: sticky; top: 0; background: var(--bg); z-index: 100; padding: 10px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .search-box { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--border); background: #111; color: white; outline: none; margin: 15px 0; box-sizing: border-box; }
+
+        .list { display: flex; flex-direction: column; gap: 8px; padding-bottom: 80px; }
+        .card { background: var(--card); padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); height: 70px; overflow: hidden; }
+        
+        .info { display: flex; align-items: center; gap: 12px; }
+        .logo { width: 40px; height: 40px; border-radius: 10px; background: #1a1a1a; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #444; border: 1px solid #333; }
+        
+        /* 🚀 ENGELLENEMEYEN FİYAT MOTORU */
+        .price-box { width: 140px; height: 50px; overflow: hidden; border-radius: 8px; }
+        .price-frame { border: none; width: 150px; height: 200px; margin-top: -65px; margin-right: -10px; pointer-events: none; }
     </style>
 </head>
 <body>
-    <input type="text" id="ara" class="search" placeholder="Hisse ara..." onkeyup="filter()">
-    <div class="grid" id="liste"></div>
+
+    <div class="header">
+        <div style="font-weight:900; color:var(--green); font-size: 20px;">BIST PRO v45</div>
+        <div style="font-size: 10px; color: var(--green); border: 1px solid var(--green); padding: 4px 10px; border-radius: 20px;">● CANLI</div>
+    </div>
+
+    <input type="text" id="ara" class="search-box" placeholder="Hisse Ara (THYAO, SASA, MIATK...)" onkeyup="filter()">
+
+    <div class="list" id="liste"></div>
 
     <script>
-        const tg = window.Telegram.WebApp; tg.expand();
-        // Buraya istediğin bütün BIST hisselerini ekleyebilirsin kanka
-        const hisseler = ["THYAO", "ASELS", "TUPRS", "SASA", "EREGL", "ASTOR", "KCHOL", "SAHOL", "MIATK", "KONTR", "REEDR", "DOAS", "FROTO", "BIMAS", "SISE", "AKBNK", "ISCTR", "GARAN"];
-        
+        const hisseler = [
+            "THYAO", "ASELS", "TUPRS", "SASA", "EREGL", "ASTOR", "KCHOL", "SAHOL", "BIMAS", "SISE",
+            "AKBNK", "ISCTR", "GARAN", "YKBNK", "KONTR", "YEOTK", "MIATK", "REEDR", "DOAS", "FROTO",
+            "LXGYO", "PEKGY", "GENKM", "MCARD"
+        ];
+
         function render(f = "") {
-            const l = document.getElementById('liste'); l.innerHTML = "";
-            hisseler.filter(s => s.includes(f.toUpperCase())).forEach(s => {
-                const d = document.createElement('div');
-                d.className = 'btn'; d.innerText = s;
-                d.onclick = () => { tg.sendData(s); tg.close(); };
-                l.appendChild(d);
+            const l = document.getElementById('liste');
+            l.innerHTML = "";
+            const filtrelenmis = hisseler.filter(s => s.includes(f.toUpperCase()));
+            
+            filtrelenmis.forEach(s => {
+                // Yahoo Finance üzerinden bloklanmayan temiz veri
+                const ticker = s === "LXGYO" ? "LXGYO.IS" : s + ".IS";
+                l.innerHTML += `
+                    <div class="card">
+                        <div class="info">
+                            <div class="logo">${s.substring(0,2)}</div>
+                            <b style="font-size:17px;">${s}</b>
+                        </div>
+                        <div class="price-box">
+                            <iframe class="price-frame" src="https://m.tr.investing.com/equities/${s.toLowerCase()}" loading="lazy"></iframe>
+                        </div>
+                    </div>`;
             });
         }
         function filter() { render(document.getElementById('ara').value); }
