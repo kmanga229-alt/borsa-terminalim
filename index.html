@@ -3,40 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BIST Terminal v23</title>
+    <title>BIST Mega Terminal</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { background: #000; color: #fff; font-family: sans-serif; margin: 0; padding: 10px; }
-        .hisse-list { display: flex; flex-direction: column; gap: 15px; }
-        .hisse-card { background: #111; border: 1px solid #222; border-radius: 12px; padding: 10px; }
-        .widget-container { height: 150px; width: 100%; overflow: hidden; border-radius: 8px; }
-        h2 { color: #00ff88; text-align: center; font-size: 18px; }
+        :root { --bg: #000; --card: #0d0d0d; --green: #00ff88; --red: #ff3b30; --border: #1a1a1a; }
+        body { background: var(--bg); color: white; font-family: -apple-system, sans-serif; margin: 0; padding: 10px; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); z-index: 100; }
+        .logo { font-weight: 900; font-size: 18px; color: var(--green); }
+        
+        /* Arama Çubuğu */
+        .search-container { padding: 10px; }
+        .search-input { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--border); background: #111; color: white; box-sizing: border-box; outline: none; }
+
+        /* Widget Listesi */
+        .hisse-list { display: flex; flex-direction: column; gap: 8px; padding-bottom: 100px; }
+        .widget-wrapper { background: var(--card); border-radius: 15px; border: 1px solid var(--border); overflow: hidden; height: 82px; position: relative; }
+        
+        /* Loading Yazısı (Widget gelene kadar) */
+        .loader { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 10px; color: #333; z-index: 0; }
+        iframe { position: relative; z-index: 1; border: none; width: 100%; height: 100%; }
     </style>
 </head>
 <body>
-    <h2>🚀 BIST CANLI TERMİNAL</h2>
-    <div class="hisse-list" id="liste"></div>
+
+    <div class="header">
+        <div class="logo">BIST MEGA PRO</div>
+        <div style="font-size: 10px; border: 1px solid var(--green); padding: 4px 8px; border-radius: 20px; color: var(--green);">● CANLI VERİ (TURBO)</div>
+    </div>
+
+    <div class="search-container">
+        <input type="text" id="searchInput" class="search-input" placeholder="Hisse ara (Örn: SASA, THYAO, MIATK...)" onkeyup="filterHisseler()">
+    </div>
+
+    <div class="hisse-list" id="hisseList"></div>
 
     <script>
         const tg = window.Telegram.WebApp; tg.expand(); tg.ready();
-        
-        // Takip etmek istediğin hisseleri buraya yaz kanka
-        const hisseler = ["THYAO", "ASELS", "TUPRS", "SASA", "EREGL"];
 
-        function baslat() {
-            const container = document.getElementById('liste');
-            hisseler.forEach(s => {
-                const div = document.createElement('div');
-                div.className = 'hisse-card';
-                // Bu widget hem fiyatı hem ufak grafiği aynı anda hatasız gösterir
-                div.innerHTML = `
-                    <div class="widget-container">
-                        <iframe src="https://s.tradingview.com/embed-widget/mini-symbol-overview/?symbol=BIST%3A${s}&theme=dark&width=100%&height=100%&trendLineColor=%2300ff88&underLineColor=rgba(0%2C255%2C136%2C0.1)&locale=tr" frameborder="0" style="width:100%; height:100%;"></iframe>
+        // Bütün Popüler BIST Hisseleri (Buraya istediğin kadar ekle kanka)
+        const hisseler = [
+            "THYAO", "ASELS", "TUPRS", "SASA", "EREGL", "ASTOR", "KCHOL", "SAHOL", "BIMAS", "SISE",
+            "AKBNK", "ISCTR", "GARAN", "YKBNK", "KONTR", "YEOTK", "MIATK", "REEDR", "DOAS", "FROTO",
+            "TOASO", "PGSUS", "HEKTS", "PETKM", "ODAS", "EUPWR", "ALARK", "GUBRF", "KOZAL", "KOZAA",
+            "ENKAI", "KARDMD", "SOKM", "MGROS", "TKFEN", "TAVHL", "ARCLK", "VESTL", "ZOREN", "EGEEN"
+        ];
+
+        function renderList(filter = "") {
+            const container = document.getElementById('hisseList');
+            container.innerHTML = "";
+            const filtered = hisseler.filter(s => s.includes(filter.toUpperCase()));
+            
+            filtered.forEach(s => {
+                container.innerHTML += `
+                    <div class="widget-wrapper">
+                        <div class="loader">Yükleniyor...</div>
+                        <iframe src="https://s.tradingview.com/embed-widget/single-quote/?symbol=BIST%3A${s}&theme=dark&locale=tr"></iframe>
                     </div>`;
-                container.appendChild(div);
             });
         }
-        baslat();
+
+        function filterHisseler() {
+            renderList(document.getElementById('searchInput').value);
+        }
+
+        renderList();
     </script>
 </body>
 </html>
