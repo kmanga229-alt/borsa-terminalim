@@ -3,185 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BIST ULTIMATE Terminal</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <title>BIST Master Terminal</title>
     <style>
-        :root { --bg: #000; --card: #080808; --green: #00ff88; --red: #ff3e3e; --gray: #888; --border: #1a1a1a; --yellow: #ffcc00; }
-        body { background: var(--bg); color: white; font-family: -apple-system, sans-serif; margin: 0; padding: 0; overflow: hidden; height: 100vh; }
+        :root { --bg: #000; --card: #0a0a0a; --green: #00ff88; --red: #ff3b30; --border: #1a1a1a; }
+        body { background: var(--bg); color: #fff; font-family: -apple-system, sans-serif; margin: 0; padding: 10px; overflow-x: hidden; }
         
-        .page { display: none; height: 100vh; flex-direction: column; }
-        .page.active { display: flex; }
-
-        .header { padding: 15px; border-bottom: 1px solid var(--border); background: var(--bg); }
-        .search-container { position: relative; width: 100%; margin-bottom: 15px; }
-        .search-bar { width: 100%; background: #121212; border: 1px solid var(--border); padding: 12px 12px 12px 35px; border-radius: 10px; color: white; outline: none; box-sizing: border-box; font-size: 15px; }
-        .search-bar:focus { border-color: var(--green); }
-        .search-icon { position: absolute; left: 12px; top: 13px; color: var(--gray); }
-
-        .tabs { display: flex; gap: 10px; padding: 0 0 5px; overflow-x: auto; }
-        .tab-btn { background: #111; color: var(--gray); border: 1px solid var(--border); padding: 8px 18px; border-radius: 20px; font-size: 12px; white-space: nowrap; cursor: pointer; font-weight: bold; }
-        .tab-btn.active { background: rgba(0, 255, 136, 0.1); color: var(--green); border-color: var(--green); }
-
-        .content { flex: 1; overflow-y: auto; padding-bottom: 90px; }
-        .hisse-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid var(--border); }
+        .section-header { font-size: 14px; font-weight: 800; color: #555; margin: 15px 5px 10px; text-transform: uppercase; letter-spacing: 1px; }
         
-        .left { display: flex; align-items: center; gap: 10px; flex: 1; }
-        .fav-star { font-size: 20px; color: #222; cursor: pointer; transition: 0.2s; padding: 5px; }
-        .fav-star.active { color: var(--yellow); }
+        /* Liste Tasarımı */
+        .list-container { display: flex; flex-direction: column; gap: 2px; background: var(--border); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+        .row { background: var(--card); padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .row:active { background: #111; }
         
-        .logo { width: 34px; height: 34px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid #222; flex-shrink: 0; }
-        .logo img { width: 85%; height: 85%; object-fit: contain; }
+        .symbol-area { display: flex; align-items: center; gap: 12px; }
+        .symbol-name { font-weight: 800; font-size: 16px; }
         
-        .symbol-info { display: flex; flex-direction: column; cursor: pointer; flex: 1; }
-        .symbol { font-weight: 800; font-size: 15px; }
-        .name { font-size: 9px; color: var(--gray); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
-
-        .right { text-align: right; cursor: pointer; }
-        .price { font-weight: 800; font-size: 15px; margin-bottom: 2px; }
-        .change { font-size: 11px; font-weight: bold; border-radius: 4px; }
-        .up { color: var(--green); }
-        .down { color: var(--red); }
-
-        .nav-bar { position: fixed; bottom: 15px; left: 15px; right: 15px; background: rgba(10,10,10,0.9); border: 1px solid var(--border); border-radius: 20px; display: flex; justify-content: space-around; padding: 10px; backdrop-filter: blur(15px); }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--gray); font-size: 10px; cursor: pointer; }
-        .nav-item.active { color: var(--green); }
-        .nav-icon { font-size: 18px; }
-
-        #chart-frame { width: 100%; height: 100%; border: none; }
-        .back-btn { background: #111; border: 1px solid #333; color: white; padding: 8px 15px; border-radius: 8px; font-weight: bold; }
+        /* Grafik Paneli (Popup) */
+        #chartModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 10000; }
+        .top-nav { padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; }
+        .close-btn { background: #222; border: none; color: #fff; padding: 8px 15px; border-radius: 8px; font-weight: bold; }
+        
+        iframe { border: none; }
     </style>
 </head>
 <body>
 
-    <div id="home-page" class="page active">
-        <div class="header">
-            <div class="search-container">
-                <span class="search-icon">🔍</span>
-                <input type="text" id="searchInput" class="search-bar" placeholder="Hisse veya şirket ara..." oninput="handleUI()">
-            </div>
-            <div class="tabs">
-                <div id="tab-all" class="tab-btn active" onclick="setMode('all')">HEPSİ</div>
-                <div id="tab-fav" class="tab-btn" onclick="setMode('fav')">⭐ FAVORİLERİM</div>
-            </div>
+    <div style="height: 40px; margin-bottom: 10px;">
+        <iframe src="https://s.tradingview.com/embed-widget/ticker-tape/?symbols=BIST%3AXU100%7C1D%2CBIST%3ATHYAO%7C1D%2CBIST%3AASELS%7C1D%2CBIST%3ATUPRS%7C1D&theme=dark&locale=tr" width="100%" height="100%"></iframe>
+    </div>
+
+    <div class="section-header">Hisse Takip Listesi</div>
+    <div class="list-container" id="hisseList">
         </div>
-        <div class="content" id="stockList"></div>
+
+    <div class="section-header">Piyasa Haberleri</div>
+    <div style="height: 400px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border);">
+        <iframe src="https://s.tradingview.com/embed-widget/timeline/?feedMode=market&market=stock&symbol=BIST%3AXU100&theme=dark&locale=tr" width="100%" height="100%"></iframe>
     </div>
 
-    <div id="analiz-page" class="page">
-        <div class="header" style="display:flex; justify-content:space-between; align-items:center;">
-            <button class="back-btn" onclick="showPage('home-page')">← Geri</button>
-            <span id="selectedSymbol" style="font-weight:bold; color:var(--green);">ANALİZ</span>
+    <div id="chartModal">
+        <div class="top-nav">
+            <span id="targetName" style="font-weight:900; color:var(--green);">ANALİZ</span>
+            <button class="close-btn" onclick="closeChart()">Kapat</button>
         </div>
-        <div id="chartContainer" style="flex:1;"></div>
+        <div id="chartContainer" style="height: calc(100% - 65px);"></div>
     </div>
 
-    <div class="nav-bar">
-        <div class="nav-item active" onclick="showPage('home-page', this)"><span class="nav-icon">🏠</span><span>Piyasa</span></div>
-        <div class="nav-item" onclick="tg.close()"><span class="nav-icon">🚪</span><span>Çıkış</span></div>
-    </div>
+    <script>
+        const hisseler = ["THYAO", "ASELS", "TUPRS", "SASA", "EREGL", "ASTOR", "KCHOL", "SAHOL", "BIMAS", "LXGYO"];
 
-<script>
-    const tg = window.Telegram.WebApp; tg.expand();
-    let mode = 'all'; // 'all' veya 'fav'
-    let favorites = JSON.parse(localStorage.getItem('bist_favs')) || [];
-
-    // 🚀 GENİŞ LİSTE (BIST 30 + Popülerler)
-    const stocks = [
-        {s: "THYAO", n: "Türk Hava Yolları", f: "296,00", d: "+1.25", c: "up", i: "turkish-airlines"},
-        {s: "ASELS", n: "Aselsan", f: "330,50", d: "-1.78", c: "down", i: "aselsan"},
-        {s: "TUPRS", n: "Tüpraş", f: "255,25", d: "+0.29", c: "up", i: "tupras"},
-        {s: "SASA", n: "Sasa Polyester", f: "38,40", d: "-0.45", c: "down", i: "sasa-polyester"},
-        {s: "MIATK", n: "Mia Teknoloji", f: "68,45", d: "+2.15", c: "up", i: "mia-teknoloji"},
-        {s: "ASTOR", n: "Astor Enerji", f: "206,50", d: "+0.63", c: "up", i: "astor-enerji"},
-        {s: "EREGL", n: "Ereğli Demir Çelik", f: "45,12", d: "+0.14", c: "up", i: "eregli-demir-celik"},
-        {s: "LXGYO", n: "Luxera GMYO", f: "17,40", d: "+9.99", c: "up", i: "luxera-gayrimenkul"},
-        {s: "BIMAS", n: "Bim Mağazalar", f: "691,00", d: "+1.78", c: "up", i: "bim-birlesik-magazalar"},
-        {s: "KCHOL", n: "Koç Holding", f: "191,30", d: "+0.93", c: "up", i: "koc-holding"},
-        {s: "SAHOL", n: "Sabancı Holding", f: "89,00", d: "-1.22", c: "down", i: "sabanci-holding"},
-        {s: "AKBNK", n: "Akbank", f: "42,15", d: "+1.50", c: "up", i: "akbank"},
-        {s: "GARAN", n: "Garanti BBVA", f: "65,80", d: "+0.45", c: "up", i: "garanti-bankasi"},
-        {s: "ISCTR", n: "İş Bankası (C)", f: "13,15", d: "-0.23", c: "down", i: "isbank"},
-        {s: "SISE", n: "Şişecam", f: "52,40", d: "-1.10", c: "down", i: "sise-cam"},
-        {s: "PETKM", n: "Petkim", f: "24,12", d: "+0.85", c: "up", i: "petkim"},
-        {s: "HEKTS", n: "Hektaş", f: "18,20", d: "-2.15", c: "down", i: "hektas"},
-        {s: "KONTR", n: "Kontrolmatik", f: "245,10", d: "-0.85", c: "down", i: "kontrolmatik"},
-        {s: "YEOTK", n: "Yeo Teknoloji", f: "215,40", d: "+4.12", c: "up", i: "yeo-teknoloji"},
-        {s: "REEDR", n: "Reeder Teknoloji", f: "55,20", d: "+9.98", c: "up", i: "reeder-teknoloji"},
-        {s: "PGSUS", n: "Pegasus", f: "840,00", d: "+3.20", c: "up", i: "pegasus"},
-        {s: "FROTO", n: "Ford Otosan", f: "980,50", d: "+1.12", c: "up", i: "ford-otosan"},
-        {s: "EGEEN", n: "Ege Endüstri", f: "14500", d: "+0.45", c: "up", i: "ege-endustri"},
-        {s: "GENKM", n: "Gentaş Kimya", f: "14,69", d: "+9.96", c: "up", i: "gentas"}
-    ];
-
-    function toggleFavorite(symbol, event) {
-        event.stopPropagation();
-        if (favorites.includes(symbol)) {
-            favorites = favorites.filter(s => s !== symbol);
-        } else {
-            favorites.push(symbol);
-        }
-        localStorage.setItem('bist_favs', JSON.stringify(favorites));
-        handleUI();
-    }
-
-    function setMode(newMode) {
-        mode = newMode;
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(`tab-${mode}`).classList.add('active');
-        handleUI();
-    }
-
-    function handleUI() {
-        const filter = document.getElementById('searchInput').value.toLowerCase();
-        const listContainer = document.getElementById('stockList');
-        listContainer.innerHTML = "";
-        
-        let filtered = stocks.filter(item => 
-            item.s.toLowerCase().includes(filter) || 
-            item.n.toLowerCase().includes(filter)
-        );
-
-        if (mode === 'fav') {
-            filtered = filtered.filter(item => favorites.includes(item.s));
+        function init() {
+            const container = document.getElementById('hisseList');
+            hisseler.forEach(s => {
+                container.innerHTML += `
+                    <div class="row" onclick="openChart('${s}')">
+                        <div class="symbol-area">
+                            <div style="width:35px; height:35px; background:#1a1a1a; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:bold; color:#444; border:1px solid #222;">${s.substring(0,2)}</div>
+                            <div class="symbol-name">${s}</div>
+                        </div>
+                        <div style="width:140px; height:45px;">
+                            <iframe src="https://s.tradingview.com/embed-widget/single-quote/?symbol=BIST%3A${s}&theme=dark&locale=tr" width="100%" height="100%" scrolling="no"></iframe>
+                        </div>
+                    </div>`;
+            });
         }
 
-        filtered.forEach(item => {
-            const isFav = favorites.includes(item.s);
-            const row = document.createElement('div');
-            row.className = 'hisse-row';
-            
-            const logoUrl = `https://s3-symbol-logo.tradingview.com/${item.i}--big.svg`;
-            
-            row.innerHTML = `
-                <div class="left">
-                    <span class="fav-star ${isFav ? 'active' : ''}" onclick="toggleFavorite('${item.s}', event)">★</span>
-                    <div class="logo"><img src="${logoUrl}" onerror="this.src='https://ui-avatars.com/api/?name=${item.s}&background=111&color=fff'"></div>
-                    <div class="symbol-info" onclick="openAnaliz('${item.s}')">
-                        <span class="symbol">${item.s}</span>
-                        <span class="name">${item.n}</span>
-                    </div>
-                </div>
-                <div class="right" onclick="openAnaliz('${item.s}')">
-                    <div class="price">${item.f} ₺</div>
-                    <span class="change ${item.c}">${item.d}%</span>
-                </div>`;
-            listContainer.appendChild(row);
-        });
-    }
+        function openChart(s) {
+            document.getElementById('chartModal').style.display = 'block';
+            document.getElementById('targetName').innerText = s + " TEKNİK ANALİZ";
+            // Bu widget analiz özetini, al-sat sinyalini ve pivotları CANLI gösterir.
+            document.getElementById('chartContainer').innerHTML = `
+                <iframe src="https://s.tradingview.com/embed-widget/technical-analysis/?symbol=BIST%3A${s}&theme=dark&locale=tr&interval=1D&width=100%&height=100%" width="100%" height="100%"></iframe>
+            `;
+        }
 
-    function showPage(pageId) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById(pageId).classList.add('active');
-    }
+        function closeChart() {
+            document.getElementById('chartModal').style.display = 'none';
+            document.getElementById('chartContainer').innerHTML = "";
+        }
 
-    function openAnaliz(symbol) {
-        showPage('analiz-page');
-        document.getElementById('selectedSymbol').innerText = symbol + " ANALİZ";
-        const container = document.getElementById('chartContainer');
-        container.innerHTML = `<iframe id="chart-frame" src="https://s.tradingview.com/widgetembed/?symbol=BIST:${symbol}&interval=D&theme=dark&style=1&locale=tr"></iframe>`;
-    }
-
-    handleUI();
-</script>
+        init();
+    </script>
 </body>
 </html>
