@@ -9,82 +9,63 @@
         :root { --bg: #000; --card: #0d0d0d; --green: #00ff88; --red: #ff3e3e; --border: #1a1a1a; }
         body { background: var(--bg); color: white; font-family: -apple-system, sans-serif; margin: 0; padding: 15px; overflow-x: hidden; }
         
-        .search-box { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--border); background: #111; color: white; margin-bottom: 20px; box-sizing: border-box; outline: none; font-size: 16px; }
+        .search-box { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--border); background: #111; color: white; margin-bottom: 20px; box-sizing: border-box; outline: none; }
         
-        .hisse-list { display: flex; flex-direction: column; gap: 8px; padding-bottom: 50px; }
-        .hisse-row { background: var(--card); padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); cursor: pointer; transition: 0.2s; }
-        .hisse-row:active { background: #161616; transform: scale(0.98); }
+        .hisse-list { display: flex; flex-direction: column; gap: 8px; padding-bottom: 80px; }
+        .hisse-row { background: var(--card); padding: 12px 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); cursor: pointer; height: 65px; }
         
-        .logo-box { width: 40px; height: 40px; border-radius: 10px; background: #fff; padding: 2px; margin-right: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .logo-box img { width: 90%; height: 90%; object-fit: contain; }
+        .logo-box { width: 38px; height: 38px; border-radius: 50%; background: #1a1a1a; margin-right: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid #333; }
+        .logo-box img { width: 100%; height: 100%; object-fit: cover; }
         
-        .symbol { font-weight: 800; font-size: 17px; letter-spacing: 0.5px; }
-        .price-box { text-align: right; }
-        .price { font-weight: 800; font-size: 16px; color: #fff; }
-        .change { font-size: 12px; font-weight: bold; padding: 3px 8px; border-radius: 6px; margin-top: 4px; display: inline-block; }
-        .up { color: var(--green); background: rgba(0,255,136,0.1); }
-        .down { color: var(--red); background: rgba(255,62,62,0.1); }
+        .symbol { font-weight: 800; font-size: 16px; }
+
+        /* 🚀 OTOMATİK FİYAT MOTORU (BEYAZ KUTU VERMEZ) */
+        .price-engine { width: 130px; height: 45px; overflow: hidden; border-radius: 8px; position: relative; }
+        .price-iframe { border: none; width: 160px; height: 160px; position: absolute; top: -55px; right: -15px; pointer-events: none; }
         
-        /* ANALİZ EKRANI */
         #analizView { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; }
         .nav-bar { padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; }
-        .back-btn { background: #222; border: none; color: #fff; padding: 8px 15px; border-radius: 8px; font-weight: bold; }
-        #iframeContainer { width: 100%; height: calc(100% - 60px); }
     </style>
 </head>
 <body>
 
 <div id="home">
-    <div style="font-weight:900; font-size:22px; color:var(--green); margin-bottom:15px; letter-spacing:-1px;">BIST PRO v46</div>
-    <input type="text" id="ara" class="search-box" placeholder="Hisse veya şirket ara..." onkeyup="ara()">
+    <div style="font-weight:900; font-size:20px; color:var(--green); margin-bottom:15px;">BIST MASTER v48 ● OTOMATİK</div>
+    <input type="text" id="ara" class="search-box" placeholder="Hisse ara..." onkeyup="ara()">
     <div class="hisse-list" id="liste"></div>
 </div>
 
 <div id="analizView">
-    <div class="nav-bar">
-        <span id="baslik" style="font-weight:bold; color:var(--green);">ANALİZ</span>
-        <button class="back-btn" onclick="kapat()">Kapat</button>
-    </div>
-    <div id="iframeContainer"></div>
+    <div class="nav-bar"><span id="baslik">ANALİZ</span><button onclick="kapat()" style="background:#222;color:white;border:none;padding:8px 15px;border-radius:8px;">Kapat</button></div>
+    <div id="iframeContainer" style="width:100%; height:calc(100% - 60px);"></div>
 </div>
 
 <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-    tg.ready();
+    const tg = window.Telegram.WebApp; tg.expand(); tg.ready();
 
-    // 🚀 Fiyatları ve Değişimleri Buraya "Garantili" Şekilde Ekledim
     const hisseler = [
-        {s: "THYAO", l: "thy.com", f: 296.00, d: 1.25},
-        {s: "ASELS", l: "aselsan.com.tr", f: 330.50, d: -1.78},
-        {s: "TUPRS", l: "tupras.com.tr", f: 255.25, d: 0.29},
-        {s: "BIMAS", l: "bim.com.tr", f: 691.00, d: 1.78},
-        {s: "SASA", l: "sasa.com.tr", f: 38.40, d: -0.45},
-        {s: "SAHOL", l: "sabanci.com", f: 89.00, d: -1.22},
-        {s: "LXGYO", l: "luxera.com.tr", f: 17.40, d: 9.99},
-        {s: "ASTOR", l: "astorenerji.com.tr", f: 206.50, d: 0.63},
-        {s: "GENKM", l: "gentas.com.tr", f: 14.69, d: 9.96},
-        {s: "KCHOL", l: "koc.com.tr", f: 191.30, d: 0.93},
-        {s: "MIATK", l: "miateknoloji.com", f: 68.45, d: 2.15},
-        {s: "KONTR", l: "kontrolmatik.com", f: 245.10, d: -0.85},
-        {s: "EREGL", l: "erdemir.com.tr", f: 45.12, d: 0.14},
-        {s: "ISCTR", l: "isbank.com.tr", f: 13.15, d: 0.23}
+        {s: "THYAO", i: "turkish-airlines"}, {s: "ASELS", i: "aselsan"},
+        {s: "TUPRS", i: "tupras"}, {s: "BIMAS", i: "bim-birlesik-magazalar"},
+        {s: "SASA", i: "sasa-polyester"}, {s: "SAHOL", i: "sabanci-holding"},
+        {s: "KCHOL", i: "koc-holding"}, {s: "MIATK", i: "mia-teknoloji"},
+        {s: "KONTR", i: "kontrolmatik"}, {s: "EREGL", i: "eregli-demir-celik"},
+        {s: "ASTOR", i: "astor-enerji"}, {s: "SISE", i: "sise-cam"},
+        {s: "AKBNK", i: "akbank"}, {s: "LXGYO", i: "luxera-gayrimenkul"}
     ];
 
     function render(f = "") {
         const listDiv = document.getElementById('liste');
         listDiv.innerHTML = "";
         hisseler.filter(x => x.s.includes(f.toUpperCase())).forEach(h => {
-            const cls = h.d >= 0 ? 'up' : 'down';
+            const logoUrl = `https://s3-symbol-logo.tradingview.com/${h.i}--big.svg`;
             listDiv.innerHTML += `
                 <div class="hisse-row" onclick="ac('${h.s}')">
                     <div style="display:flex;align-items:center">
-                        <div class="logo-box"><img src="https://logo.clearbit.com/${h.l}"></div>
+                        <div class="logo-box"><img src="${logoUrl}" onerror="this.src='https://ui-avatars.com/api/?name=${h.s}&background=1a1a1a&color=fff'"></div>
                         <div class="symbol">${h.s}</div>
                     </div>
-                    <div class="price-box">
-                        <div class="price">${h.f.toFixed(2)} ₺</div>
-                        <div class="change ${cls}">%${h.d}</div>
+                    <div class="price-engine">
+                        <iframe class="price-iframe" src="https://www.google.com/finance/quote/${h.s}:IST" loading="lazy"></iframe>
                     </div>
                 </div>`;
         });
@@ -94,8 +75,6 @@
         document.getElementById('home').style.display = 'none';
         document.getElementById('analizView').style.display = 'block';
         document.getElementById('baslik').innerText = s + " ANALİZ";
-        
-        // TradingView'ın bloklanmayan grafiği
         const url = `https://s.tradingview.com/widgetembed/?symbol=BIST:${s}&interval=D&theme=dark&style=1&locale=tr`;
         document.getElementById('iframeContainer').innerHTML = `<iframe src="${url}" style="width:100%;height:100%;border:none;"></iframe>`;
     }
