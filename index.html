@@ -3,44 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BIST Terminal PRO</title>
+    <title>BIST Hyper Terminal</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root { --bg: #000; --card: #0d0d0d; --green: #00ff88; --red: #ff3b30; --border: #1a1a1a; }
-        body { background: var(--bg); color: white; font-family: -apple-system, sans-serif; margin: 0; padding: 10px; overflow-x: hidden; }
+        body { background: var(--bg); color: white; font-family: -apple-system, sans-serif; margin: 0; padding: 15px; }
         
-        /* Sabit Üst Panel */
-        .header { position: sticky; top: 0; background: var(--bg); z-index: 100; padding: 10px 5px; border-bottom: 1px solid var(--border); }
-        .search-box { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--border); background: #111; color: white; outline: none; font-size: 16px; box-sizing: border-box; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid var(--border); }
+        .logo { font-weight: 900; font-size: 20px; color: var(--green); letter-spacing: -1px; }
 
-        /* Hisse Listesi */
-        .hisse-list { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; padding-bottom: 100px; }
-        .hisse-card { background: var(--card); padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); cursor: pointer; }
+        .search-box { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--border); background: #111; color: white; margin: 15px 0; box-sizing: border-box; outline: none; }
+
+        .hisse-list { display: flex; flex-direction: column; gap: 10px; padding-bottom: 50px; }
+        .hisse-card { background: var(--card); padding: 18px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); }
         
         .symbol-info { display: flex; align-items: center; gap: 12px; }
-        .icon-circle { width: 40px; height: 40px; border-radius: 10px; background: #1a1a1a; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #444; border: 1px solid #333; }
+        .icon { width: 40px; height: 40px; border-radius: 10px; background: #1a1a1a; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #444; border: 1px solid #333; }
         
-        .price-frame { width: 120px; height: 45px; border: none; overflow: hidden; pointer-events: none; }
+        /* Yahoo Veri Alanı - Temiz ve Hızlı */
+        .data-box { text-align: right; }
+        .price { font-weight: 900; font-size: 16px; margin-bottom: 4px; }
+        .status-btn { font-size: 11px; font-weight: bold; padding: 4px 10px; border-radius: 6px; background: rgba(0, 255, 136, 0.1); color: var(--green); border: 1px solid rgba(0, 255, 136, 0.2); }
+        
+        /* Iframe yerine modern analiz butonu */
+        .analiz-link { text-decoration: none; color: var(--green); font-size: 11px; font-weight: bold; border-bottom: 1px dashed var(--green); }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <input type="text" id="ara" class="search-box" placeholder="Hisse ara (Örn: SASA, THYAO, MIATK...)" onkeyup="filter()">
+        <div class="logo">BIST HYPER</div>
+        <div style="font-size: 10px; color: var(--green);">● AKTİF TERMİNAL</div>
     </div>
+
+    <input type="text" id="ara" class="search-box" placeholder="Hisse ara (Örn: SASA, THYAO, EREGL...)" onkeyup="filter()">
 
     <div class="hisse-list" id="liste"></div>
 
     <script>
         const tg = window.Telegram.WebApp; tg.expand(); tg.ready();
 
-        // Kanka buraya BIST'teki bütün önemli hisseleri ekledim, liste uzayıp gider
+        // Bütün BIST Hisseleri (Kanka buraya istediğini ekle)
         const hisseler = [
             "THYAO", "ASELS", "TUPRS", "SASA", "EREGL", "ASTOR", "KCHOL", "SAHOL", "BIMAS", "SISE",
             "AKBNK", "ISCTR", "GARAN", "YKBNK", "KONTR", "YEOTK", "MIATK", "REEDR", "DOAS", "FROTO",
-            "TOASO", "PGSUS", "HEKTS", "PETKM", "ODAS", "EUPWR", "ALARK", "GUBRF", "KOZAL", "KOZAA",
-            "ENKAI", "KARDMD", "SOKM", "MGROS", "TKFEN", "TAVHL", "ARCLK", "VESTL", "ZOREN", "EGEEN",
-            "ASUZU", "BRYAT", "CANTE", " CIMSA", "DOHOL", "FENER", "GESAN", "GSDHO", " KARSN", "KORDS"
+            "TOASO", "PGSUS", "HEKTS", "PETKM", "ODAS", "EUPWR", "ALARK", "GUBRF", "KOZAL", "CANTE"
         ];
 
         function render(f = "") {
@@ -49,13 +56,21 @@
             const filtrelenmis = hisseler.filter(s => s.includes(f.toUpperCase()));
             
             filtrelenmis.forEach(s => {
+                // Yahoo Finance mobil görünümü: Beyaz kutu hatası vermeyen tek kaynak
+                const yahooLink = `https://finance.yahoo.com/quote/${s}.IS`;
+                
                 l.innerHTML += `
                     <div class="hisse-card">
                         <div class="symbol-info">
-                            <div class="icon-circle">${s.substring(0,2)}</div>
-                            <b style="font-size:16px;">${s}</b>
+                            <div class="icon">${s.substring(0,2)}</div>
+                            <div>
+                                <div style="font-weight:800; font-size:17px;">${s}</div>
+                                <div style="font-size:10px; color:#555;">Borsa İstanbul</div>
+                            </div>
                         </div>
-                        <iframe class="price-frame" src="https://www.google.com/finance/quote/${s}:IST?window=1D"></iframe>
+                        <div class="data-box">
+                            <a href="${yahooLink}" target="_blank" class="analiz-link">CANLI VERİ ></a>
+                        </div>
                     </div>`;
             });
         }
