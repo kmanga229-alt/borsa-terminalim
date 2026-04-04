@@ -3,58 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BIST Live Price</title>
+    <title>BIST Real-Time</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root { --bg: #000; --card: #0d0d0d; --green: #00ff88; --red: #ff3b30; --border: #1a1a1a; }
         body { background: var(--bg); color: white; font-family: -apple-system, sans-serif; margin: 0; padding: 10px; overflow-x: hidden; }
-        
-        .header { position: sticky; top: 0; background: var(--bg); z-index: 100; padding: 10px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-        .logo { font-weight: 900; font-size: 18px; color: var(--green); }
-
+        .header { position: sticky; top: 0; background: var(--bg); z-index: 100; padding: 10px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
         .search-box { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--border); background: #111; color: white; outline: none; margin: 15px 0; box-sizing: border-box; }
-
         .hisse-list { display: flex; flex-direction: column; gap: 10px; padding-bottom: 50px; }
-        .hisse-card { background: var(--card); padding: 10px; border-radius: 15px; border: 1px solid var(--border); display: flex; flex-direction: column; height: 100px; overflow: hidden; }
-        
-        /* Widget'ın tam sığması için özel ayar */
-        .widget-frame { width: 100%; height: 100%; border: none; pointer-events: none; }
+        .hisse-card { background: var(--card); border-radius: 15px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; height: 70px; overflow: hidden; }
+        /* Google Finance'ı tam fiyat bölgesinden yakalayan 'Sniper' Frame */
+        .price-engine { border: none; width: 140px; height: 150px; margin-top: -55px; margin-right: -10px; pointer-events: none; }
     </style>
 </head>
 <body>
-
-    <div class="header">
-        <div class="logo">BIST LIVE v30</div>
-        <div style="font-size: 10px; color: var(--green); border: 1px solid var(--green); padding: 4px 8px; border-radius: 20px;">● CANLI FİYAT</div>
-    </div>
-
-    <input type="text" id="ara" class="search-box" placeholder="Hisse ara (SASA, THYAO, MIATK...)" onkeyup="filter()">
-
+    <div class="header"><b style="color:var(--green)">BIST LIVE v31</b><span>● CANLI</span></div>
+    <input type="text" id="ara" class="search-box" placeholder="Hisse Ara (SASA, THYAO...)" onkeyup="filter()">
     <div class="hisse-list" id="liste"></div>
 
     <script>
         const tg = window.Telegram.WebApp; tg.expand(); tg.ready();
-
-        const hisseler = [
-            "THYAO", "ASELS", "TUPRS", "SASA", "EREGL", "ASTOR", "KCHOL", "SAHOL", "BIMAS", "SISE",
-            "AKBNK", "ISCTR", "GARAN", "YKBNK", "KONTR", "YEOTK", "MIATK", "REEDR", "DOAS", "FROTO",
-            "TOASO", "PGSUS", "HEKTS", "PETKM", "ODAS", "EUPWR", "ALARK", "GUBRF", "KOZAL", "CANTE",
-            "CIMSA", "DOHOL", "EKGYO", "ENKAI", "GESAN", "HALKB", "KARDMD", "KORDS", "MAVI", "TAVHL"
-        ];
+        const hisseler = ["THYAO", "ASELS", "TUPRS", "SASA", "EREGL", "ASTOR", "KCHOL", "SAHOL", "BIMAS", "SISE", "KONTR", "MIATK", "REEDR"];
 
         function render(f = "") {
             const l = document.getElementById('liste');
             l.innerHTML = "";
-            const filtrelenmis = hisseler.filter(s => s.includes(f.toUpperCase()));
-            
-            filtrelenmis.forEach(s => {
+            hisseler.filter(s => s.includes(f.toUpperCase())).forEach(s => {
                 l.innerHTML += `
                     <div class="hisse-card">
-                        <iframe class="widget-frame" src="https://s.tradingview.com/embed-widget/single-quote/?symbol=BIST%3A${s}&theme=dark&locale=tr"></iframe>
+                        <b style="font-size:18px;">${s}</b>
+                        <div style="width: 130px; height: 50px; overflow: hidden; border-radius: 10px;">
+                            <iframe class="price-engine" src="https://www.google.com/finance/quote/${s}:IST"></iframe>
+                        </div>
                     </div>`;
             });
         }
-
         function filter() { render(document.getElementById('ara').value); }
         render();
     </script>
